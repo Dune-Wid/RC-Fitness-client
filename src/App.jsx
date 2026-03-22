@@ -1,0 +1,31 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Members from './pages/Members';
+import Staff from './pages/Staff';
+import MemberProfile from './pages/MemberProfile';
+
+const AdminRoute = ({ children }) => {
+  const role = localStorage.getItem('userRole');
+  return role === 'admin' ? children : <Navigate to="/login" />;
+};
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/profile" element={<MemberProfile />} />
+
+        {/* Protected Admin Routes */}
+        <Route path="/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
+        <Route path="/members" element={<AdminRoute><Members /></AdminRoute>} />
+        <Route path="/staff" element={<AdminRoute><Staff /></AdminRoute>} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
