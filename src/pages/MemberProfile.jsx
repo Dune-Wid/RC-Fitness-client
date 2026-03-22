@@ -12,7 +12,7 @@ const MemberProfile = () => {
       try {
         const token = localStorage.getItem('authToken');
         // We'll create this "me" route in the backend next
-        const res = await axios.get('https://rc-fitness-backend.vercel.app//api/user/me', {
+        const res = await axios.get('https://rc-fitness-backend.vercel.app/api/user/me', {
           headers: { 'auth-token': token }
         });
         setProfile(res.data);

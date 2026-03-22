@@ -23,9 +23,9 @@ const StaffModal = ({ close, refresh, staffMember }) => {
       const config = { headers: { 'auth-token': token } };
 
       if (staffMember) {
-        await axios.put(`https://rc-fitness-backend.vercel.app//api/user/update/${staffMember._id}`, formData, config);
+        await axios.put(`https://rc-fitness-backend.vercel.app/api/user/update/${staffMember._id}`, formData, config);
       } else {
-        await axios.post('https://rc-fitness-backend.vercel.app//api/user/register', formData, config);
+        await axios.post('https://rc-fitness-backend.vercel.app/api/user/register', formData, config);
       }
       refresh(); close();
     } catch (err) { alert(err.response?.data || "Error"); }
