@@ -71,7 +71,7 @@ const Finances = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="bg-[#111] border border-gray-900 rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><TrendingDown size={64}/></div>
-            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Income Previous Month</p>
+            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Outgoing Payments</p>
             <h2 className="text-4xl font-black italic tracking-tighter text-gray-300 z-10">LKR 450,000</h2>
           </div>
           <div className="bg-[#111] border border-red-900/30 rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-2xl relative overflow-hidden group">
@@ -242,19 +242,100 @@ const Finances = () => {
           )}
 
           {activeTab === 'salary' && (
-            <div className="bg-[#111] border border-gray-900 rounded-3xl p-12 text-center shadow-xl animate-in fade-in slide-in-from-bottom-4">
-              <Users size={48} className="mx-auto text-gray-700 mb-4" />
-              <h2 className="text-2xl font-black uppercase italic tracking-wider text-gray-500">Staff Salary</h2>
-              <p className="text-gray-600 mt-2 text-sm font-bold tracking-widest uppercase">Select from list to view payroll details...</p>
-            </div>
+            <section className="bg-[#111] border border-gray-900 rounded-3xl p-6 lg:p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4">
+              <div className="flex items-center justify-between mb-6 border-b border-gray-900 pb-4">
+                <div className="flex items-center gap-3">
+                  <Users className="text-blue-500" size={24} />
+                  <h2 className="text-2xl font-black uppercase italic tracking-wider">Staff Payroll</h2>
+                </div>
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest px-6 py-2 rounded-xl transition-all flex items-center gap-2">
+                  <Plus size={14} /> Process Payroll
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { id: 1, name: 'Mike Johnson', role: 'Head Trainer', salary: 85000, status: 'Paid', date: '2023-11-01' },
+                  { id: 2, name: 'Sarah Lee', role: 'Yoga Instructor', salary: 60000, status: 'Pending', date: '2023-11-01' },
+                  { id: 3, name: 'Tom Hardy', role: 'Cleaner', salary: 35000, status: 'Paid', date: '2023-11-01' },
+                ].map(staff => (
+                  <div key={staff.id} className="flex flex-col md:flex-row md:items-center justify-between bg-black p-5 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors gap-4">
+                     <div>
+                       <div className="flex items-center gap-3">
+                         <h4 className="font-bold text-lg">{staff.name}</h4>
+                         <span className={`px-2 py-0.5 rounded-full border text-[9px] font-black uppercase tracking-widest ${staff.status === 'Paid' ? 'bg-blue-900/20 text-blue-500 border-blue-900/30' : 'bg-yellow-900/20 text-yellow-500 border-yellow-900/30'}`}>
+                           {staff.status}
+                         </span>
+                       </div>
+                       <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mt-1">{staff.role}</p>
+                     </div>
+
+                     <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t border-gray-800 md:border-t-0">
+                       <div className="flex flex-col items-start md:items-end">
+                         <span className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">Due Date</span>
+                         <span className="font-bold text-gray-400 block text-sm flex items-center gap-1"><Calendar size={12}/> {staff.date}</span>
+                       </div>
+                       <div className="flex flex-col items-end pl-6 ml-2 border-l border-gray-800">
+                         <span className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">Total Salary</span>
+                         <span className="text-blue-500 font-bold block text-lg">LKR {staff.salary.toLocaleString()}</span>
+                       </div>
+                       {staff.status === 'Pending' && (
+                         <button className="bg-blue-600/20 hover:bg-blue-600 text-blue-500 hover:text-white font-black uppercase text-[10px] tracking-widest px-4 py-2 rounded-xl transition-all ml-4">
+                           Pay Now
+                         </button>
+                       )}
+                     </div>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
 
           {activeTab === 'shop' && (
-            <div className="bg-[#111] border border-gray-900 rounded-3xl p-12 text-center shadow-xl animate-in fade-in slide-in-from-bottom-4">
-              <ShoppingBag size={48} className="mx-auto text-gray-700 mb-4" />
-              <h2 className="text-2xl font-black uppercase italic tracking-wider text-gray-500">Shop Revenue</h2>
-              <p className="text-gray-600 mt-2 text-sm font-bold tracking-widest uppercase">Connecting to store logs...</p>
-            </div>
+            <section className="bg-[#111] border border-gray-900 rounded-3xl p-6 lg:p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4">
+              <div className="flex items-center justify-between mb-6 border-b border-gray-900 pb-4">
+                <div className="flex items-center gap-3">
+                  <ShoppingBag className="text-purple-500" size={24} />
+                  <h2 className="text-2xl font-black uppercase italic tracking-wider">Shop & Supplement Revenue</h2>
+                </div>
+                <div className="text-right">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Total Revenue</p>
+                   <p className="text-2xl font-black italic tracking-tighter text-purple-500">LKR 125,000</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { id: 1, item: 'Whey Protein 5lbs', category: 'Supplement', amount: 25000, date: '2023-11-20', customer: 'John Doe' },
+                  { id: 2, item: 'Creatine Monohydrate', category: 'Supplement', amount: 8000, date: '2023-11-19', customer: 'Jane Smith' },
+                  { id: 3, item: 'Gym Gloves Pro', category: 'Gear', amount: 4500, date: '2023-11-18', customer: 'Guest' },
+                  { id: 4, item: 'BCAA Energy Drink', category: 'Beverage', amount: 800, date: '2023-11-18', customer: 'Mike Johnson' },
+                ].map(sale => (
+                  <div key={sale.id} className="flex flex-col md:flex-row md:items-center justify-between bg-black p-5 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors gap-4">
+                     <div>
+                       <div className="flex items-center gap-3">
+                         <h4 className="font-bold text-lg">{sale.item}</h4>
+                         <span className="px-2 py-0.5 rounded-full border bg-purple-900/20 text-purple-500 border-purple-900/30 text-[9px] font-black uppercase tracking-widest">
+                           {sale.category}
+                         </span>
+                       </div>
+                       <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mt-1">Purchased by: <span className="text-gray-300">{sale.customer}</span></p>
+                     </div>
+
+                     <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t border-gray-800 md:border-t-0">
+                       <div className="flex flex-col items-start md:items-end">
+                         <span className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">Date</span>
+                         <span className="font-bold text-gray-400 block text-sm flex items-center gap-1"><Calendar size={12}/> {sale.date}</span>
+                       </div>
+                       <div className="flex flex-col items-end pl-6 ml-2 border-l border-gray-800">
+                         <span className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">Amount</span>
+                         <span className="text-purple-500 font-bold block text-lg">+ LKR {sale.amount.toLocaleString()}</span>
+                       </div>
+                     </div>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
 
           {activeTab === 'dashboard' && (
