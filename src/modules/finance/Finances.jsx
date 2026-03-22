@@ -1,43 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import Sidebar from '../../components/Sidebar';
 import { CreditCard, DollarSign, Plus, Trash2, Calendar, FileText, Edit2, TrendingUp, BarChart3, Wallet, Users, ShoppingBag, Banknote, TrendingDown } from 'lucide-react';
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'plans', 'payments', 'salary', 'shop'
 
-  const [plans, setPlans] = useState([
-    { id: 1, name: 'Basic Plan', price: 3000, duration: '1 Month' },
-    { id: 2, name: 'Pro Plan', price: 8000, duration: '3 Months' },
-    { id: 3, name: 'Annual Plan', price: 45000, duration: '12 Months' },
-  ]);
-  const [payments, setPayments] = useState([
-    { id: 1, member: 'John Doe', amount: 3000, date: '2023-10-01', status: 'Paid', duration: '1 Month' },
-    { id: 2, member: 'Jane Smith', amount: 8000, date: '2023-10-05', status: 'Paid', duration: '3 Months' },
-  ]);
+  const [plans, setPlans] = useState([]);
+  const [payments, setPayments] = useState([]);
 
   const [newPlan, setNewPlan] = useState({ name: '', price: '', duration: '' });
   const [newPayment, setNewPayment] = useState({ member: '', amount: '', date: '', status: 'Paid', duration: '' });
 
-  const handleAddPlan = (e) => {
+  const fetchFinanceData = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const config = { headers: { 'auth-token': token } };
+      
+      const [plansRes, paymentsRes] = await Promise.all([
+        axios.get('https://rc-fitness-backend.vercel.app/api/finance/plans', config).catch(() => ({ data: [] })),
+        axios.get('https://rc-fitness-backend.vercel.app/api/finance/payments', config).catch(() => ({ data: [] }))
+      ]);
+      
+      setPlans(plansRes.data || []);
+      setPayments(paymentsRes.data || []);
+    } catch (err) { console.error("Error fetching finance data:", err); }
+  };
+
+  useEffect(() => { fetchFinanceData(); }, []);
+
+  const handleAddPlan = async (e) => {
     e.preventDefault();
     if (!newPlan.name || !newPlan.price || !newPlan.duration) return;
-    setPlans([...plans, { ...newPlan, id: Date.now(), price: Number(newPlan.price) }]);
-    setNewPlan({ name: '', price: '', duration: '' });
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.post('https://rc-fitness-backend.vercel.app/api/finance/plans/add', { ...newPlan, price: Number(newPlan.price) }, { headers: { 'auth-token': token } });
+      setNewPlan({ name: '', price: '', duration: '' });
+      fetchFinanceData();
+    } catch (err) { console.error(err); }
   };
 
-  const handleDeletePlan = (id) => {
-    setPlans(plans.filter(p => p.id !== id));
+  const handleDeletePlan = async (id) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.delete(`https://rc-fitness-backend.vercel.app/api/finance/plans/delete/${id}`, { headers: { 'auth-token': token } });
+      fetchFinanceData();
+    } catch (err) { console.error(err); }
   };
 
-  const handleAddPayment = (e) => {
+  const handleAddPayment = async (e) => {
     e.preventDefault();
     if (!newPayment.member || !newPayment.amount || !newPayment.date) return;
-    setPayments([...payments, { ...newPayment, id: Date.now(), amount: Number(newPayment.amount) }]);
-    setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '' });
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.post('https://rc-fitness-backend.vercel.app/api/finance/payments/add', { ...newPayment, amount: Number(newPayment.amount) }, { headers: { 'auth-token': token } });
+      setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '' });
+      fetchFinanceData();
+    } catch (err) { console.error(err); }
   };
 
-  const handleDeletePayment = (id) => {
-    setPayments(payments.filter(p => p.id !== id));
+  const handleDeletePayment = async (id) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.delete(`https://rc-fitness-backend.vercel.app/api/finance/payments/delete/${id}`, { headers: { 'auth-token': token } });
+      fetchFinanceData();
+    } catch (err) { console.error(err); }
   };
 
   const calculateRemainingDays = (paymentDate, durationText) => {
@@ -129,7 +156,7 @@ const Finances = () => {
 
               <div className="space-y-4">
                 {plans.map(plan => (
-                  <div key={plan.id} className="flex items-center justify-between bg-black p-4 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors">
+                  <div key={plan._id || plan.id} className="flex items-center justify-between bg-black p-4 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors">
                     <div>
                       <h4 className="font-bold text-lg">{plan.name}</h4>
                       <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">{plan.duration} &bull; <span className="text-green-500">LKR {plan.price}</span></p>
@@ -138,7 +165,7 @@ const Finances = () => {
                       <button type="button" className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 transition-colors">
                         <Edit2 size={18} />
                       </button>
-                      <button type="button" onClick={() => handleDeletePlan(plan.id)} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors">
+                      <button type="button" onClick={() => handleDeletePlan(plan._id || plan.id)} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors">
                         <Trash2 size={18} />
                       </button>
                     </div>
@@ -162,7 +189,8 @@ const Finances = () => {
                   <input type="text" placeholder="Member Name" value={newPayment.member} onChange={(e) => setNewPayment({...newPayment, member: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600 transition-colors" />
                   <select 
                     onChange={(e) => {
-                      const selectedPlan = plans.find(p => p.id === parseInt(e.target.value));
+                      // Using string comparison since _id is usually a string in MongoDB
+                      const selectedPlan = plans.find(p => String(p._id || p.id) === String(e.target.value));
                       if (selectedPlan) {
                         setNewPayment({ ...newPayment, amount: selectedPlan.price, duration: selectedPlan.duration });
                       }
@@ -170,9 +198,9 @@ const Finances = () => {
                     className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600 transition-colors text-gray-400"
                     defaultValue=""
                   >
-                    <option value="" disabled>Select Plan (Auto-fills Amount)</option>
+                    <option value="" disabled>Select Plan</option>
                     {plans.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} - LKR {p.price}</option>
+                      <option key={p._id || p.id} value={p._id || p.id}>{p.name} - LKR {p.price}</option>
                     ))}
                   </select>
                   <input type="number" placeholder="Amount (LKR)" value={newPayment.amount} onChange={(e) => setNewPayment({...newPayment, amount: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600 transition-colors" />
@@ -196,7 +224,7 @@ const Finances = () => {
                   const isExpired = remainingDays === 0;
 
                   return (
-                   <div key={payment.id} className="flex flex-col md:flex-row md:items-center justify-between bg-black p-5 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors gap-4">
+                   <div key={payment._id || payment.id} className="flex flex-col md:flex-row md:items-center justify-between bg-black p-5 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors gap-4">
                      <div>
                        <div className="flex items-center gap-3">
                          <h4 className="font-bold text-lg">{payment.member}</h4>
@@ -229,7 +257,7 @@ const Finances = () => {
                          <span className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">Amount</span>
                          <span className="text-green-500 font-bold block text-lg">LKR {payment.amount}</span>
                        </div>
-                       <button onClick={() => handleDeletePayment(payment.id)} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors ml-4">
+                       <button onClick={() => handleDeletePayment(payment._id || payment.id)} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors ml-4">
                          <Trash2 size={18} />
                        </button>
                      </div>
