@@ -28,7 +28,11 @@ const PublicShop = () => {
             <ShoppingBag className="text-red-600" size={24} />
             <span className="font-black text-xl tracking-tighter uppercase italic">RC Store</span>
           </div>
-          <div className="w-[100px]"></div>
+          <div className="flex items-center gap-4">
+            <button className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all">
+              <ShoppingBag size={14} /> Cart (0)
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -50,7 +54,7 @@ const PublicShop = () => {
                 </div>
                 <h3 className="text-2xl font-black uppercase italic leading-tight mb-2">{product.name}</h3>
               </div>
-              <div className="border-t border-white/5 pt-4 mt-6 flex justify-between items-end">
+              <div className="border-t border-white/5 pt-4 mt-6 flex justify-between items-end mb-4">
                 <div>
                   <span className="text-gray-600 text-[9px] font-black uppercase tracking-widest block mb-1">Status</span>
                   <span className={`text-sm font-bold ${product.stock > 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -59,9 +63,12 @@ const PublicShop = () => {
                 </div>
                 <div className="text-right">
                   <span className="text-gray-600 text-[9px] font-black uppercase tracking-widest block mb-1">Price</span>
-                  <span className="text-2xl font-black text-white italic tracking-tighter">LKR {product.price.toLocaleString()}</span>
+                  <span className="text-2xl font-black text-white italic tracking-tighter block mb-2">LKR {product.price.toLocaleString()}</span>
                 </div>
               </div>
+              <button disabled={product.stock <= 0} className="w-full bg-white hover:bg-gray-200 text-black font-black uppercase tracking-[0.2em] py-3 rounded text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+              </button>
             </div>
           ))}
         </div>
