@@ -13,7 +13,7 @@ const Members = () => {
   const fetchMembers = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get('http://localhost:5000/api/user/all', { headers: { 'auth-token': token } });
+      const res = await axios.get('https://rc-fitness-backend.vercel.app//api/user/all', { headers: { 'auth-token': token } });
       setMembers(res.data);
     } catch (err) { console.error(err); }
   };
@@ -23,7 +23,7 @@ const Members = () => {
   const deleteMember = async (id) => {
     if (window.confirm("Delete this member?")) {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`http://localhost:5000/api/user/delete/${id}`, { headers: { 'auth-token': token } });
+      await axios.delete(`https://rc-fitness-backend.vercel.app//api/user/delete/${id}`, { headers: { 'auth-token': token } });
       fetchMembers();
     }
   };

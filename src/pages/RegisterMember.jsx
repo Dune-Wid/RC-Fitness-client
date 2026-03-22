@@ -26,7 +26,7 @@ function RegisterMember() {
       };
 
       const token = localStorage.getItem('authToken');
-      await axios.post('http://localhost:5000/api/user/register', payload, {
+      await axios.post('https://rc-fitness-backend.vercel.app//api/user/register', payload, {
         headers: { 'auth-token': token }
       });
 
