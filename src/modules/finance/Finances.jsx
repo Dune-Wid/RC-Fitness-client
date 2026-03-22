@@ -32,39 +32,53 @@ const Finances = () => {
   const handleAddPlan = async (e) => {
     e.preventDefault();
     if (!newPlan.name || !newPlan.price || !newPlan.duration) return;
+    
+    const submittedPlan = { ...newPlan, price: Number(newPlan.price) };
+    const tempPlan = { ...submittedPlan, _id: Date.now() };
+    
+    setPlans(prev => [...prev, tempPlan]);
+    setNewPlan({ name: '', price: '', duration: '' });
+
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/finance/plans/add', { ...newPlan, price: Number(newPlan.price) }, { headers: { 'auth-token': token } });
-      setNewPlan({ name: '', price: '', duration: '' });
+      await axios.post('https://rc-fitness-backend.vercel.app/api/finance/plans/add', submittedPlan, { headers: { 'auth-token': token } });
       fetchFinanceData();
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Error adding to DB:", err); }
   };
 
   const handleDeletePlan = async (id) => {
+    setPlans(prev => prev.filter(p => (p._id || p.id) !== id));
     try {
       const token = localStorage.getItem('authToken');
       await axios.delete(`https://rc-fitness-backend.vercel.app/api/finance/plans/delete/${id}`, { headers: { 'auth-token': token } });
       fetchFinanceData();
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Error deleting from DB:", err); }
   };
 
   const handleAddPayment = async (e) => {
     e.preventDefault();
     if (!newPayment.member || !newPayment.amount || !newPayment.date) return;
+    
+    const submittedPayment = { ...newPayment, amount: Number(newPayment.amount) };
+    const tempPayment = { ...submittedPayment, _id: Date.now() };
+
+    setPayments(prev => [...prev, tempPayment]);
+    setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '' });
+
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/finance/payments/add', { ...newPayment, amount: Number(newPayment.amount) }, { headers: { 'auth-token': token } });
-      setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '' });
+      await axios.post('https://rc-fitness-backend.vercel.app/api/finance/payments/add', submittedPayment, { headers: { 'auth-token': token } });
       fetchFinanceData();
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Error adding to DB:", err); }
   };
 
   const handleDeletePayment = async (id) => {
+    setPayments(prev => prev.filter(p => (p._id || p.id) !== id));
     try {
       const token = localStorage.getItem('authToken');
       await axios.delete(`https://rc-fitness-backend.vercel.app/api/finance/payments/delete/${id}`, { headers: { 'auth-token': token } });
       fetchFinanceData();
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Error deleting from DB:", err); }
   };
 
   const calculateRemainingDays = (paymentDate, durationText) => {
