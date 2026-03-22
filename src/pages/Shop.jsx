@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import { ShoppingBag, Plus, Trash2, Package, Tag, Layers, DollarSign } from 'lucide-react';
+import { ShoppingBag, Plus, Trash2, Package, Tag, Layers, DollarSign, Image as ImageIcon } from 'lucide-react';
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
-  const [newProduct, setNewProduct] = useState({ name: '', category: 'Supplement', price: '', stock: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', category: '', price: '', stock: '', images: [] });
 
   const fetchProducts = async () => {
     try {
@@ -26,7 +26,7 @@ const Shop = () => {
     const tempProduct = { ...submittedProduct, _id: Date.now() };
     
     setProducts(prev => [...prev, tempProduct]);
-    setNewProduct({ name: '', category: 'Supplement', price: '', stock: '' });
+    setNewProduct({ name: '', category: '', price: '', stock: '', images: [] });
 
     try {
       const token = localStorage.getItem('authToken');
@@ -72,11 +72,27 @@ const Shop = () => {
               <div className="relative group">
                 <Layers className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-500 transition-colors" size={16} />
                 <select value={newProduct.category} onChange={(e) => setNewProduct({...newProduct, category: e.target.value})} className="w-full bg-[#080808] border border-gray-800 rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-blue-600 transition-all text-gray-400 appearance-none">
+                  <option value="" disabled>Select Category</option>
                   <option value="Supplement">Supplement</option>
                   <option value="Apparel">Apparel</option>
                   <option value="Equipment">Equipment</option>
                   <option value="Beverage">Beverage</option>
                 </select>
+              </div>
+
+              {/* Multiple Images Upload */}
+              <div className="relative group">
+                <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-500 transition-colors" size={16} />
+                <input 
+                   type="file" 
+                   multiple 
+                   accept="image/*"
+                   onChange={(e) => {
+                     const files = Array.from(e.target.files);
+                     setNewProduct({...newProduct, images: files});
+                   }} 
+                   className="w-full bg-[#080808] border border-gray-800 rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-blue-600 transition-all text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:uppercase file:tracking-widest file:font-black file:bg-blue-900/20 file:text-blue-500 hover:file:bg-blue-900/40 cursor-pointer" 
+                />
               </div>
 
               <div className="relative group">
