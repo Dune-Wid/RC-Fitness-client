@@ -8,6 +8,8 @@ import MemberProfile from './pages/MemberProfile';
 import Finances from './modules/finance/Finances';
 import Shop from './pages/Shop';
 import EventCalendar from './pages/Event';
+import PublicShop from './pages/PublicShop';
+import PublicEvent from './pages/PublicEvent';
 
 const AdminRoute = ({ children }) => {
   const role = localStorage.getItem('userRole');
@@ -29,6 +31,10 @@ function App() {
         <Route path="/finances" element={<AdminRoute><Finances /></AdminRoute>} />
         <Route path="/shop" element={<AdminRoute><Shop /></AdminRoute>} />
         <Route path="/event" element={<AdminRoute><EventCalendar /></AdminRoute>} />
+        
+        {/* Public Views */}
+        <Route path="/store" element={<PublicShop />} />
+        <Route path="/events" element={<PublicEvent />} />
       </Routes>
     </Router>
   );
