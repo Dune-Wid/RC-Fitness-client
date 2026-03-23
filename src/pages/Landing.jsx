@@ -22,7 +22,8 @@ const Landing = () => {
             <nav className="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-gray-400">
               <a href="#" className="hover:text-white transition-colors">Home</a>
               <a href="#" className="hover:text-white transition-colors">Classes</a>
-              <a href="#" className="hover:text-white transition-colors">Store</a>
+              <Link to="/store" className="hover:text-white transition-colors">Store</Link>
+              <Link to="/events" className="hover:text-white transition-colors">Events</Link>
               <a href="#" className="hover:text-white transition-colors">Membership</a>
             </nav>
             <Link to="/login" className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all">
@@ -41,7 +42,8 @@ const Landing = () => {
           <div className="md:hidden bg-black border-b border-white/10 p-6 flex flex-col gap-6 text-center animate-in slide-in-from-top duration-300">
             <a href="#" className="text-sm font-bold uppercase tracking-widest">Home</a>
             <a href="#" className="text-sm font-bold uppercase tracking-widest">Classes</a>
-            <a href="#" className="text-sm font-bold uppercase tracking-widest">Store</a>
+            <Link to="/store" className="text-sm font-bold uppercase tracking-widest">Store</Link>
+            <Link to="/events" className="text-sm font-bold uppercase tracking-widest">Events</Link>
             <a href="#" className="text-sm font-bold uppercase tracking-widest">Membership</a>
             <Link to="/login" className="bg-red-600 py-4 font-black uppercase tracking-widest">Login</Link>
           </div>
