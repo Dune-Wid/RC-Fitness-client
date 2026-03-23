@@ -1,91 +1,138 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { ShoppingBag, ArrowLeft, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { Search, ShoppingBag, Filter, Plus } from 'lucide-react';
+import PublicNavbar from '../components/PublicNavbar';
+import { useCart } from '../context/CartContext';
 
 const PublicShop = () => {
   const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('All');
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get('https://rc-fitness-backend.vercel.app/api/shop/products').catch(() => ({ data: [] }));
-        setProducts(res.data || []);
-      } catch (err) { console.error(err); }
+        const res = await axios.get('https://rc-fitness-backend.vercel.app/api/shop/products');
+        setProducts(res.data);
+      } catch (err) { console.error("Error fetching products:", err); }
     };
     fetchProducts();
   }, []);
 
+  const categories = ['All', 'Supplements', 'Apparel', 'Equipment', 'Accessories', 'Other'];
+  
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = category === 'All' || p.category === category;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
-    <div className="bg-[#080808] min-h-screen text-white font-sans selection:bg-red-600">
-      <nav className="border-b border-white/5 bg-black/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-             <ArrowLeft size={20} className="text-red-600" />
-             <span className="font-black text-xs tracking-widest uppercase">Back to Home</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="text-red-600" size={24} />
-            <span className="font-black text-xl tracking-tighter uppercase italic">RC Store</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all">
-              <ShoppingBag size={14} /> Cart (0)
-            </button>
-          </div>
-        </div>
-      </nav>
+    <div className="bg-[#050505] min-h-screen text-white font-sans selection:bg-purple-600">
+      <PublicNavbar />
 
-      <main className="max-w-7xl mx-auto px-6 py-12 md:py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter italic mb-4">Elite <span className="text-red-600">Supplements</span></h1>
-          <p className="text-gray-400 font-medium max-w-2xl mx-auto">Fuel your progress with our premium selection of verified supplements, gym apparel, and high-quality accessories.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map(product => (
-            <div key={product._id || product.id} className="bg-[#111] border border-white/5 rounded-2xl p-6 group hover:border-red-600/30 transition-all duration-500 flex flex-col justify-between min-h-[280px] relative overflow-hidden">
-              {product.image && (
-                <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity duration-500">
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                </div>
-              )}
-              <div className="relative z-10 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex justify-between items-start mb-6">
-                    <span className="px-3 py-1 rounded-full border bg-red-900/10 text-red-500 border-red-900/20 text-[9px] font-black uppercase tracking-widest">
-                      {product.category}
-                    </span>
-                    <Tag size={16} className="text-gray-700" />
-                  </div>
-                  <h3 className="text-2xl font-black uppercase italic leading-tight mb-2">{product.name}</h3>
-                </div>
-                <div className="border-t border-white/5 pt-4 mt-6 flex justify-between items-end mb-4">
-                  <div>
-                    <span className="text-gray-600 text-[9px] font-black uppercase tracking-widest block mb-1">Status</span>
-                    <span className={`text-sm font-bold ${product.stock > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {product.stock > 0 ? 'In Stock' : 'Sold Out'}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-gray-600 text-[9px] font-black uppercase tracking-widest block mb-1">Price</span>
-                    <span className="text-2xl font-black text-white italic tracking-tighter block mb-2">LKR {product.price.toLocaleString()}</span>
-                  </div>
-                </div>
+      {/* Main Store Content */}
+      <main className="max-w-7xl mx-auto px-6 pt-32 pb-12 flex flex-col md:flex-row gap-10">
+        
+        {/* Sidebar Filters */}
+        <aside className="w-full md:w-64 flex-shrink-0">
+          <div className="sticky top-28 bg-[#111] border border-gray-900 rounded-3xl p-6">
+            <h2 className="text-xl font-black uppercase italic tracking-tighter mb-6 flex items-center gap-2">
+              <Filter size={18} className="text-purple-500" /> Filters
+            </h2>
+            
+            <div className="mb-8">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3 block">Search</label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Find products..." 
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 pl-10 text-sm focus:outline-none focus:border-purple-600 transition-colors"
+                />
+                <Search size={16} className="absolute left-4 top-3.5 text-gray-500" />
               </div>
-              <button disabled={product.stock <= 0} className="w-full bg-white hover:bg-gray-200 text-black font-black uppercase tracking-[0.2em] py-3 rounded text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed relative z-10 mt-4">
-                {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
-              </button>
             </div>
-          ))}
-        </div>
 
-        {products.length === 0 && (
-          <div className="flex flex-col items-center justify-center p-20 border border-dashed border-white/10 rounded-3xl opacity-50">
-            <ShoppingBag size={48} className="text-gray-600 mb-4" />
-            <span className="text-gray-500 text-sm font-black uppercase tracking-widest">Store Inventory is Empty</span>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3 block">Categories</label>
+              <div className="flex flex-col gap-2">
+                {categories.map(cat => (
+                  <button 
+                    key={cat}
+                    onClick={() => setCategory(cat)}
+                    className={`text-left px-4 py-3 rounded-xl text-sm font-bold tracking-wide transition-all ${
+                      category === cat ? 'bg-purple-600/20 text-purple-400 border border-purple-900/50' : 'text-gray-400 hover:bg-gray-900 border border-transparent hover:text-white'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        )}
+        </aside>
+
+        {/* Products Grid */}
+        <section className="flex-1">
+          <header className="mb-8 flex justify-between items-end border-b border-gray-900 pb-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter italic">Pro Shop</h1>
+              <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em] mt-2">Fuel your performance</p>
+            </div>
+            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest hidden md:block">
+              Showing {filteredProducts.length} Results
+            </p>
+          </header>
+
+          {filteredProducts.length === 0 ? (
+            <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-900 rounded-3xl opacity-50">
+              <ShoppingBag size={48} className="text-gray-700 mb-4" />
+              <p className="text-gray-500 uppercase tracking-widest font-bold text-sm">No products found matching your criteria.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredProducts.map(product => (
+                <Link to={`/store/${product._id}`} key={product._id} className="bg-[#111] border border-gray-900 rounded-3xl overflow-hidden shadow-xl group hover:border-purple-900/50 transition-all flex flex-col h-full hover:-translate-y-1">
+                  <div className="relative h-64 bg-black overflow-hidden flex items-center justify-center p-6">
+                    {product.images && product.images[0] ? (
+                      <img src={product.images[0]} alt={product.name} className="w-full h-full object-contain opacity-90 group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <ShoppingBag size={48} className="text-gray-800" />
+                    )}
+                    <div className="absolute top-4 right-4">
+                      {product.stock === 0 ? (
+                        <span className="bg-red-600/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">Out of Stock</span>
+                      ) : null}
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 flex-1 flex flex-col relative z-20">
+                    <p className="text-gray-500 text-[9px] uppercase font-bold tracking-widest mb-2">{product.category}</p>
+                    <h3 className="font-black text-xl uppercase tracking-tight italic mb-2 line-clamp-2">{product.name}</h3>
+                    
+                    <div className="mt-auto flex items-center justify-between pt-4">
+                      <p className="text-purple-500 font-black text-2xl">LKR {product.price.toLocaleString()}</p>
+                      
+                      {product.stock > 0 && (
+                        <button 
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart(product); }}
+                          className="bg-purple-600/90 backdrop-blur hover:bg-purple-500 text-white p-3 rounded-2xl transition-all hover:scale-110 active:scale-95 shadow-xl border border-purple-500"
+                        >
+                          <ShoppingBag size={18} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
       </main>
     </div>
   );
