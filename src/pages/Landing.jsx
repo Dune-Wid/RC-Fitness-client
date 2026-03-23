@@ -1,52 +1,13 @@
 import { Link } from 'react-router-dom';
-import { Dumbbell, Users, ShoppingBag, Instagram, Globe, Twitter, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { Dumbbell, Users, ShoppingBag, Instagram, Globe, Twitter } from 'lucide-react';
+import PublicNavbar from '../components/PublicNavbar';
 
 const Landing = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <div className="bg-black text-white font-sans selection:bg-red-600">
       {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="bg-red-600 p-1.5 rounded-sm">
-              <Dumbbell className="text-white" size={20} />
-            </div>
-            <span className="font-black text-xl tracking-tighter uppercase italic">RC Fitness</span>
-          </div>
-
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-10">
-            <nav className="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-              <a href="#" className="hover:text-white transition-colors">Home</a>
-              <a href="#" className="hover:text-white transition-colors">Classes</a>
-              <a href="#" className="hover:text-white transition-colors">Store</a>
-              <a href="#" className="hover:text-white transition-colors">Membership</a>
-            </nav>
-            <Link to="/login" className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all">
-              Login
-            </Link>
-          </div>
-
-          {/* Mobile Menu Toggle */}
-          <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
-        </div>
-
-        {/* Mobile Nav Overlay */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-black border-b border-white/10 p-6 flex flex-col gap-6 text-center animate-in slide-in-from-top duration-300">
-            <a href="#" className="text-sm font-bold uppercase tracking-widest">Home</a>
-            <a href="#" className="text-sm font-bold uppercase tracking-widest">Classes</a>
-            <a href="#" className="text-sm font-bold uppercase tracking-widest">Store</a>
-            <a href="#" className="text-sm font-bold uppercase tracking-widest">Membership</a>
-            <Link to="/login" className="bg-red-600 py-4 font-black uppercase tracking-widest">Login</Link>
-          </div>
-        )}
-      </nav>
+      <PublicNavbar />
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -115,6 +76,7 @@ const Landing = () => {
           <div className="flex gap-10 text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-12">
             <a href="#" className="hover:text-white">About</a>
             <a href="#" className="hover:text-white">Classes</a>
+            <Link to="/events" className="hover:text-white">Events</Link>
             <a href="#" className="hover:text-white">Membership</a>
             <a href="#" className="hover:text-white">Privacy Policy</a>
           </div>
