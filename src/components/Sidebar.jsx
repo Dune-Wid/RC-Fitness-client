@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCheck, CreditCard, Dumbbell, Settings, LogOut, Menu, X, ShoppingBag, Calendar } from 'lucide-react';
+import { LayoutDashboard, Users, BicepsFlexed , UserCheck, CreditCard, Dumbbell, Settings, LogOut, Menu, X, ShoppingBag, Calendar } from 'lucide-react';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -15,6 +15,7 @@ const Sidebar = () => {
     { name: 'Equipment', icon: <Dumbbell size={20}/>, path: '/equipment' },
     { name: 'Shop', icon: <ShoppingBag size={20}/>, path: '/shop' },
     { name: 'Event', icon: <Calendar size={20}/>, path: '/event' },
+    { name: 'Class', icon:<BicepsFlexed size={20}/>, path: '/class'},
     { name: 'Settings', icon: <Settings size={20}/>, path: '/settings' },
   ];
 
