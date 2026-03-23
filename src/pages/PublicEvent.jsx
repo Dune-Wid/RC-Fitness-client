@@ -52,20 +52,25 @@ const PublicEvent = () => {
           {events.map(event => {
             const { day, month } = getDayAndMonth(event.date);
             return (
-              <div key={event._id || event.id} className="flex flex-col md:flex-row items-center bg-[#111] rounded-2xl border border-white/5 overflow-hidden hover:border-red-600/30 transition-all duration-500 group">
-                <div className="bg-black p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5 group-hover:bg-red-900/10 transition-colors w-full md:w-40">
+              <div key={event._id || event.id} className="flex flex-col md:flex-row items-center bg-[#111] rounded-2xl border border-white/5 overflow-hidden hover:border-red-600/30 transition-all duration-500 group relative">
+                {event.image && (
+                  <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity duration-500">
+                    <img src={event.image} alt={event.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                  </div>
+                )}
+                <div className="bg-black/80 backdrop-blur-sm p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5 group-hover:bg-red-900/10 transition-colors w-full md:w-40 relative z-10 h-full">
                   <span className="text-red-600 font-bold uppercase tracking-widest text-sm mb-1">{month}</span>
                   <span className="text-5xl md:text-6xl font-black italic tracking-tighter text-white">{day}</span>
                 </div>
                 
-                <div className="flex-1 p-8">
-                  <span className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest mb-4 ${event.type === 'Competition' ? 'bg-red-900/10 text-red-500 border-red-900/20' : event.type === 'Class' ? 'bg-blue-900/10 text-blue-500 border-blue-900/20' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
+                <div className="flex-1 p-8 relative z-10 bg-[#111]/50 backdrop-blur-sm h-full">
+                  <span className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest mb-4 ${event.type === 'Competition' ? 'bg-red-900/30 text-red-400 border-red-900/40' : event.type === 'Class' ? 'bg-blue-900/30 text-blue-400 border-blue-900/40' : 'bg-gray-800/80 text-gray-300 border-gray-700'}`}>
                     {event.type}
                   </span>
-                  <h3 className="text-3xl font-black uppercase italic leading-tight mb-4">{event.title}</h3>
-                  <div className="flex flex-wrap gap-6 text-gray-400 text-xs font-bold uppercase tracking-widest">
-                    <span className="flex items-center gap-2"><Clock size={16} className="text-red-600"/> {event.time}</span>
-                    {event.location && <span className="flex items-center gap-2"><MapPin size={16} className="text-red-600"/> {event.location}</span>}
+                  <h3 className="text-3xl font-black uppercase italic leading-tight mb-4 text-white drop-shadow-md">{event.title}</h3>
+                  <div className="flex flex-wrap gap-6 text-gray-300 text-xs font-bold uppercase tracking-widest">
+                    <span className="flex items-center gap-2 drop-shadow"><Clock size={16} className="text-red-500"/> {event.time}</span>
+                    {event.location && <span className="flex items-center gap-2 drop-shadow"><MapPin size={16} className="text-red-500"/> {event.location}</span>}
                   </div>
                 </div>
               </div>

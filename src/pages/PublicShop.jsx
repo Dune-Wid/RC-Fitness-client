@@ -44,29 +44,36 @@ const PublicShop = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map(product => (
-            <div key={product._id || product.id} className="bg-[#111] border border-white/5 rounded-2xl p-6 group hover:border-red-600/30 transition-all duration-500 flex flex-col justify-between min-h-[280px]">
-              <div>
-                <div className="flex justify-between items-start mb-6">
-                  <span className="px-3 py-1 rounded-full border bg-red-900/10 text-red-500 border-red-900/20 text-[9px] font-black uppercase tracking-widest">
-                    {product.category}
-                  </span>
-                  <Tag size={16} className="text-gray-700" />
+            <div key={product._id || product.id} className="bg-[#111] border border-white/5 rounded-2xl p-6 group hover:border-red-600/30 transition-all duration-500 flex flex-col justify-between min-h-[280px] relative overflow-hidden">
+              {product.image && (
+                <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity duration-500">
+                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-2xl font-black uppercase italic leading-tight mb-2">{product.name}</h3>
-              </div>
-              <div className="border-t border-white/5 pt-4 mt-6 flex justify-between items-end mb-4">
+              )}
+              <div className="relative z-10 flex-1 flex flex-col justify-between">
                 <div>
-                  <span className="text-gray-600 text-[9px] font-black uppercase tracking-widest block mb-1">Status</span>
-                  <span className={`text-sm font-bold ${product.stock > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {product.stock > 0 ? 'In Stock' : 'Sold Out'}
-                  </span>
+                  <div className="flex justify-between items-start mb-6">
+                    <span className="px-3 py-1 rounded-full border bg-red-900/10 text-red-500 border-red-900/20 text-[9px] font-black uppercase tracking-widest">
+                      {product.category}
+                    </span>
+                    <Tag size={16} className="text-gray-700" />
+                  </div>
+                  <h3 className="text-2xl font-black uppercase italic leading-tight mb-2">{product.name}</h3>
                 </div>
-                <div className="text-right">
-                  <span className="text-gray-600 text-[9px] font-black uppercase tracking-widest block mb-1">Price</span>
-                  <span className="text-2xl font-black text-white italic tracking-tighter block mb-2">LKR {product.price.toLocaleString()}</span>
+                <div className="border-t border-white/5 pt-4 mt-6 flex justify-between items-end mb-4">
+                  <div>
+                    <span className="text-gray-600 text-[9px] font-black uppercase tracking-widest block mb-1">Status</span>
+                    <span className={`text-sm font-bold ${product.stock > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {product.stock > 0 ? 'In Stock' : 'Sold Out'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-gray-600 text-[9px] font-black uppercase tracking-widest block mb-1">Price</span>
+                    <span className="text-2xl font-black text-white italic tracking-tighter block mb-2">LKR {product.price.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
-              <button disabled={product.stock <= 0} className="w-full bg-white hover:bg-gray-200 text-black font-black uppercase tracking-[0.2em] py-3 rounded text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+              <button disabled={product.stock <= 0} className="w-full bg-white hover:bg-gray-200 text-black font-black uppercase tracking-[0.2em] py-3 rounded text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed relative z-10 mt-4">
                 {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
               </button>
             </div>

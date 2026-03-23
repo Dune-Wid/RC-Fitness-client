@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import { ShoppingBag, Plus, Trash2, Package, Tag, Layers, DollarSign, Image as ImageIcon } from 'lucide-react';
+import { ShoppingBag, Plus, Trash2, Package, Tag, Layers, Banknote, Image as ImageIcon } from 'lucide-react';
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
-  const [newProduct, setNewProduct] = useState({ name: '', category: '', price: '', stock: '', images: [] });
+  const [newProduct, setNewProduct] = useState({ name: '', category: '', price: '', stock: '', image: '' });
 
   const fetchProducts = async () => {
     try {
@@ -26,7 +26,7 @@ const Shop = () => {
     const tempProduct = { ...submittedProduct, _id: Date.now() };
     
     setProducts(prev => [...prev, tempProduct]);
-    setNewProduct({ name: '', category: '', price: '', stock: '', images: [] });
+    setNewProduct({ name: '', category: '', price: '', stock: '', image: '' });
 
     try {
       const token = localStorage.getItem('authToken');
@@ -73,10 +73,11 @@ const Shop = () => {
                 <Layers className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-500 transition-colors" size={16} />
                 <select value={newProduct.category} onChange={(e) => setNewProduct({...newProduct, category: e.target.value})} className="w-full bg-[#080808] border border-gray-800 rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-blue-600 transition-all text-gray-400 appearance-none">
                   <option value="" disabled>Select Category</option>
-                  <option value="Supplement">Supplement</option>
-                  <option value="Apparel">Apparel</option>
-                  <option value="Equipment">Equipment</option>
-                  <option value="Beverage">Beverage</option>
+                  <option value="PreWorkouts">Pre Workouts</option>
+                  <option value="WheyProteins">Whey Protiens</option>
+                  <option value="MassGainers">Mass Gainers</option>
+                  <option value="Creatine">Creatine</option>
+                  <option value="RecoveryAndVitamins">Recovery & Vitamins</option>
                 </select>
               </div>
 
@@ -88,15 +89,21 @@ const Shop = () => {
                    multiple 
                    accept="image/*"
                    onChange={(e) => {
-                     const files = Array.from(e.target.files);
-                     setNewProduct({...newProduct, images: files});
+                     const file = e.target.files[0];
+                     if (file) {
+                       const reader = new FileReader();
+                       reader.onloadend = () => {
+                         setNewProduct({...newProduct, image: reader.result});
+                       };
+                       reader.readAsDataURL(file);
+                     }
                    }} 
                    className="w-full bg-[#080808] border border-gray-800 rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-blue-600 transition-all text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:uppercase file:tracking-widest file:font-black file:bg-blue-900/20 file:text-blue-500 hover:file:bg-blue-900/40 cursor-pointer" 
                 />
               </div>
 
               <div className="relative group">
-                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-500 transition-colors" size={16} />
+                <Banknote className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-500 transition-colors" size={16} />
                 <input type="number" placeholder="Price (LKR)" value={newProduct.price} onChange={(e) => setNewProduct({...newProduct, price: e.target.value})} className="w-full bg-[#080808] border border-gray-800 rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-blue-600 transition-all text-white placeholder-gray-600" />
               </div>
 
@@ -116,7 +123,12 @@ const Shop = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {products.map(product => (
                 <div key={product._id || product.id} className="bg-[#111] border border-gray-900 rounded-3xl p-6 group hover:border-gray-700 transition-all relative overflow-hidden flex flex-col justify-between min-h-[220px] shadow-lg">
-                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                  {product.image && (
+                    <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity">
+                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none z-0">
                     <ShoppingBag size={100} />
                   </div>
                   <div>

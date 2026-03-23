@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import { Calendar as CalendarIcon, Plus, Trash2, MapPin, Clock, CalendarDays } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Trash2, MapPin, Clock, CalendarDays, Image as ImageIcon } from 'lucide-react';
 
 const EventCalendar = () => {
   const [events, setEvents] = useState([]);
-  const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '', type: 'Class', location: '' });
+  const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '', type: 'Class', location: '', image: '' });
 
   const fetchEvents = async () => {
     try {
@@ -26,7 +26,7 @@ const EventCalendar = () => {
     
     const tempEvent = { ...newEvent, _id: Date.now() };
     setEvents(prev => [...prev, tempEvent].sort((a, b) => new Date(a.date) - new Date(b.date)));
-    setNewEvent({ title: '', date: '', time: '', type: 'Class', location: '' });
+    setNewEvent({ title: '', date: '', time: '', type: 'Class', location: '', image: '' });
 
     try {
       const token = localStorage.getItem('authToken');
@@ -92,6 +92,25 @@ const EventCalendar = () => {
                 <input type="text" placeholder="Location/Studio" value={newEvent.location} onChange={(e) => setNewEvent({...newEvent, location: e.target.value})} className="w-full bg-[#080808] border border-gray-800 rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-purple-600 transition-all text-white placeholder-gray-600" />
               </div>
 
+              <div className="relative group">
+                <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-purple-500 transition-colors" size={16} />
+                <input 
+                   type="file" 
+                   accept="image/*"
+                   onChange={(e) => {
+                     const file = e.target.files[0];
+                     if (file) {
+                       const reader = new FileReader();
+                       reader.onloadend = () => {
+                         setNewEvent({...newEvent, image: reader.result});
+                       };
+                       reader.readAsDataURL(file);
+                     }
+                   }} 
+                   className="w-full bg-[#080808] border border-gray-800 rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-purple-600 transition-all text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:uppercase file:tracking-widest file:font-black file:bg-purple-900/20 file:text-purple-500 hover:file:bg-purple-900/40 cursor-pointer" 
+                />
+              </div>
+
               <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all flex items-center justify-center gap-2 mt-4 shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_30px_rgba(147,51,234,0.5)]">
                 <Plus size={18} /> Add to Calendar
               </button>
@@ -104,12 +123,17 @@ const EventCalendar = () => {
                const { day, month } = getDayAndMonth(event.date);
                return (
                   <div key={event._id || event.id} className="flex flex-row items-center bg-black rounded-3xl border border-gray-900 overflow-hidden hover:border-gray-700 transition-colors group pr-4 md:pr-6 shadow-xl relative">
-                    <div className="bg-[#111] p-6 md:p-8 flex flex-col items-center justify-center border-r border-gray-900 group-hover:bg-purple-900/10 transition-colors min-w-[100px] md:min-w-[120px]">
+                    {event.image && (
+                      <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity">
+                        <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="bg-[#111] p-6 md:p-8 flex flex-col items-center justify-center border-r border-gray-900 group-hover:bg-purple-900/10 transition-colors min-w-[100px] md:min-w-[120px] relative z-10">
                       <span className="text-purple-500 font-bold uppercase tracking-widest text-xs mb-1">{month}</span>
                       <span className="text-4xl md:text-5xl font-black italic tracking-tighter text-white">{day}</span>
                     </div>
                     
-                    <div className="flex-1 p-6 md:px-8 py-6">
+                    <div className="flex-1 p-6 md:px-8 py-6 relative z-10">
                        <span className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest mb-3 ${event.type === 'Competition' ? 'bg-red-900/20 text-red-500 border-red-900/30' : event.type === 'Class' ? 'bg-blue-900/20 text-blue-500 border-blue-900/30' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
                          {event.type}
                        </span>
@@ -120,8 +144,8 @@ const EventCalendar = () => {
                        </div>
                     </div>
 
-                    <div className="flex flex-col h-full absolute right-0 top-0 bottom-0 bg-[#080808] border-l border-gray-900 opacity-0 group-hover:opacity-100 transition-opacity justify-center px-4 w-[60px] md:w-[80px]">
-                      <button onClick={() => handleDeleteEvent(event._id || event.id)} className="w-full aspect-square flex items-center justify-center bg-[#111] rounded-xl text-gray-600 hover:text-red-500 hover:bg-red-500/10 transition-colors border border-gray-800 focus:opacity-100">
+                    <div className="flex flex-col h-full absolute right-0 top-0 bottom-0 bg-[#080808] border-l border-gray-900 opacity-0 group-hover:opacity-100 transition-opacity justify-center px-4 w-[60px] md:w-[80px] z-20">
+                      <button onClick={() => handleDeleteEvent(event._id || event.id)} className="w-full aspect-square flex items-center justify-center bg-[#111] rounded-xl text-gray-600 hover:text-red-500 hover:bg-red-500/10 transition-colors border border-gray-800 focus:opacity-100 relative z-20">
                         <Trash2 size={18} />
                       </button>
                     </div>
