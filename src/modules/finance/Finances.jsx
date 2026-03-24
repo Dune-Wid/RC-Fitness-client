@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../../components/Sidebar';
-import { CreditCard, DollarSign, Plus, Trash2, Calendar, FileText, Edit2, TrendingUp, BarChart3, Wallet, Users, ShoppingBag, Banknote, TrendingDown } from 'lucide-react';
+import {  Plus, Trash2, Calendar, FileText, Edit2, TrendingUp, BarChart3,  Users, ShoppingBag, Banknote, TrendingDown } from 'lucide-react';
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState('dashboard');

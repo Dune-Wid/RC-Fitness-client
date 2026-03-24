@@ -99,10 +99,10 @@ const Shop = () => {
                   <label className="block text-[10px] uppercase font-bold text-gray-500 tracking-widest mb-2">Category</label>
                   <select value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-gray-400" required>
                     <option value="" disabled>Select Category</option>
-                    <option value="Supplements">Supplements</option>
-                    <option value="Apparel">Apparel</option>
-                    <option value="Equipment">Equipment</option>
-                    <option value="Accessories">Accessories</option>
+                    <option value="WheyProtein">Whey Protein</option>
+                    <option value="MassGainer">Mass Gainer</option>
+                    <option value="Creatine">Creatine</option>
+                    <option value="PreWorkout">Pre-Workout</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
