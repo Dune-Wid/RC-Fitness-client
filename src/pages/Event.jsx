@@ -1,42 +1,56 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import { Calendar as CalendarIcon, Plus, Trash2, MapPin, Clock, CalendarDays, Image as ImageIcon } from 'lucide-react';
+import { Calendar, Plus, Edit2, Trash2, Image as ImageIcon, MapPin, Clock, Tag } from 'lucide-react';
 
-const EventCalendar = () => {
+const Event = () => {
   const [events, setEvents] = useState([]);
-  const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '', type: 'Class', location: '', image: '' });
+  const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' });
+  const [editEventId, setEditEventId] = useState(null);
+  const [isFormVisible, setIsFormVisible] = useState(false);
 
   const fetchEvents = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const config = { headers: { 'auth-token': token } };
-      const res = await axios.get('https://rc-fitness-backend.vercel.app/api/events', config).catch(() => ({ data: [] }));
-      
-      const sortedEvents = (res.data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
-      setEvents(sortedEvents);
+      const res = await axios.get('https://rc-fitness-backend.vercel.app/api/events', { headers: { 'auth-token': token } });
+      setEvents(res.data);
     } catch (err) { console.error("Error fetching events:", err); }
   };
 
   useEffect(() => { fetchEvents(); }, []);
 
-  const handleAddEvent = async (e) => {
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewEvent({ ...newEvent, image: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveEvent = async (e) => {
     e.preventDefault();
     if (!newEvent.title || !newEvent.date || !newEvent.time || !newEvent.type) return;
-    
-    const tempEvent = { ...newEvent, _id: Date.now() };
-    setEvents(prev => [...prev, tempEvent].sort((a, b) => new Date(a.date) - new Date(b.date)));
-    setNewEvent({ title: '', date: '', time: '', type: 'Class', location: '', image: '' });
 
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/events/add', newEvent, { headers: { 'auth-token': token } });
-      fetchEvents();
-    } catch (err) { console.error("Error adding event:", err); }
+      if (editEventId) {
+        const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/events/update/${editEventId}`, newEvent, { headers: { 'auth-token': token } });
+        setEvents(events.map(ev => ev._id === editEventId ? res.data : ev));
+        setEditEventId(null);
+      } else {
+        await axios.post('https://rc-fitness-backend.vercel.app/api/events/add', newEvent, { headers: { 'auth-token': token } });
+        fetchEvents();
+      }
+      setNewEvent({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' });
+      setIsFormVisible(false);
+    } catch (err) { console.error("Error saving event:", err); }
   };
 
   const handleDeleteEvent = async (id) => {
-    setEvents(prev => prev.filter(p => (p._id || p.id) !== id));
+    if(!window.confirm("Are you sure you want to delete this event?")) return;
     try {
       const token = localStorage.getItem('authToken');
       await axios.delete(`https://rc-fitness-backend.vercel.app/api/events/delete/${id}`, { headers: { 'auth-token': token } });
@@ -44,126 +58,154 @@ const EventCalendar = () => {
     } catch (err) { console.error("Error deleting event:", err); }
   };
 
-  const getDayAndMonth = (dateString) => {
-    if (!dateString) return { day: '--', month: '---' };
-    const date = new Date(dateString);
-    return {
-      day: date.getDate().toString().padStart(2, '0'),
-      month: date.toLocaleString('default', { month: 'short' }).toUpperCase()
-    };
-  };
-
   return (
     <div className="flex bg-[#080808] min-h-screen text-white font-sans">
       <Sidebar />
       <main className="flex-1 p-6 lg:p-12 lg:ml-64 pt-24 lg:pt-12">
-        <header className="mb-10 text-center lg:text-left">
-          <h1 className="text-4xl font-black uppercase tracking-tighter italic leading-none flex items-center justify-center lg:justify-start gap-4">
-            <CalendarDays className="text-purple-500" size={36} /> Event Calendar
-          </h1>
-          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Member 5: Schedule &amp; Contents</p>
+        <header className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-10">
+          <div className="text-center lg:text-left">
+            <h1 className="text-4xl font-black uppercase tracking-tighter italic leading-none flex items-center justify-center lg:justify-start gap-4">
+              <Calendar className="text-blue-600" size={36} /> Event Management
+            </h1>
+            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Manage Gym Events & Classes</p>
+          </div>
+          <button 
+            onClick={() => { setIsFormVisible(!isFormVisible); setEditEventId(null); setNewEvent({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' }); }} 
+            className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl transition-all active:scale-95"
+          >
+            {isFormVisible ? 'Close Form' : <><Plus size={16} className="inline mr-2" /> Schedule Event</>}
+          </button>
         </header>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
-          {/* Add Event Form */}
-          <section className="xl:col-span-1 bg-[#111] border border-gray-900 rounded-3xl p-6 lg:p-8 shadow-xl h-fit sticky top-8">
-            <div className="flex items-center gap-3 mb-6 border-b border-gray-900 pb-4">
-              <CalendarIcon className="text-purple-500" size={24} />
-              <h2 className="text-2xl font-black uppercase italic tracking-wider">Schedule Event</h2>
-            </div>
+        {isFormVisible && (
+          <form onSubmit={handleSaveEvent} className="mb-12 bg-[#111] border border-gray-900 rounded-3xl p-6 lg:p-8 shadow-xl animate-in fade-in slide-in-from-top-4">
+            <h3 className="text-[10px] font-black uppercase text-gray-500 mb-6 tracking-widest border-b border-gray-900 pb-4">
+              {editEventId ? 'Edit Event Details' : 'Create New Event'}
+            </h3>
             
-            <form onSubmit={handleAddEvent} className="flex flex-col gap-4">
-              <input type="text" placeholder="Event Title" value={newEvent.title} onChange={(e) => setNewEvent({...newEvent, title: e.target.value})} className="w-full bg-[#080808] border border-gray-800 rounded-xl px-4 py-4 text-sm focus:outline-none focus:border-purple-600 transition-all text-white placeholder-gray-600" />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <input type="date" value={newEvent.date} onChange={(e) => setNewEvent({...newEvent, date: e.target.value})} className="w-full bg-[#080808] border border-gray-800 rounded-xl px-4 py-4 text-sm focus:outline-none focus:border-purple-600 transition-all text-gray-400" />
-                <input type="time" value={newEvent.time} onChange={(e) => setNewEvent({...newEvent, time: e.target.value})} className="w-full bg-[#080808] border border-gray-800 rounded-xl px-4 py-4 text-sm focus:outline-none focus:border-purple-600 transition-all text-gray-400" />
-              </div>
-
-              <select value={newEvent.type} onChange={(e) => setNewEvent({...newEvent, type: e.target.value})} className="w-full bg-[#080808] border border-gray-800 rounded-xl px-4 py-4 text-sm focus:outline-none focus:border-purple-600 transition-all text-gray-400 appearance-none">
-                <option value="Class">Group Class</option>
-                <option value="Competition">Competition</option>
-                <option value="Seminar">Seminar</option>
-                <option value="Maintenance">Maintenance</option>
-              </select>
-
-              <div className="relative group">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-purple-500 transition-colors" size={16} />
-                <input type="text" placeholder="Location/Studio" value={newEvent.location} onChange={(e) => setNewEvent({...newEvent, location: e.target.value})} className="w-full bg-[#080808] border border-gray-800 rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-purple-600 transition-all text-white placeholder-gray-600" />
-              </div>
-
-              <div className="relative group">
-                <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-purple-500 transition-colors" size={16} />
-                <input 
-                   type="file" 
-                   accept="image/*"
-                   onChange={(e) => {
-                     const file = e.target.files[0];
-                     if (file) {
-                       const reader = new FileReader();
-                       reader.onloadend = () => {
-                         setNewEvent({...newEvent, image: reader.result});
-                       };
-                       reader.readAsDataURL(file);
-                     }
-                   }} 
-                   className="w-full bg-[#080808] border border-gray-800 rounded-xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:border-purple-600 transition-all text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:uppercase file:tracking-widest file:font-black file:bg-purple-900/20 file:text-purple-500 hover:file:bg-purple-900/40 cursor-pointer" 
-                />
-              </div>
-
-              <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all flex items-center justify-center gap-2 mt-4 shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_30px_rgba(147,51,234,0.5)]">
-                <Plus size={18} /> Add to Calendar
-              </button>
-            </form>
-          </section>
-
-          {/* Events List */}
-          <section className="xl:col-span-2 space-y-4">
-            {events.map(event => {
-               const { day, month } = getDayAndMonth(event.date);
-               return (
-                  <div key={event._id || event.id} className="flex flex-row items-center bg-black rounded-3xl border border-gray-900 overflow-hidden hover:border-gray-700 transition-colors group pr-4 md:pr-6 shadow-xl relative">
-                    {event.image && (
-                      <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity">
-                        <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                    <div className="bg-[#111] p-6 md:p-8 flex flex-col items-center justify-center border-r border-gray-900 group-hover:bg-purple-900/10 transition-colors min-w-[100px] md:min-w-[120px] relative z-10">
-                      <span className="text-purple-500 font-bold uppercase tracking-widest text-xs mb-1">{month}</span>
-                      <span className="text-4xl md:text-5xl font-black italic tracking-tighter text-white">{day}</span>
-                    </div>
-                    
-                    <div className="flex-1 p-6 md:px-8 py-6 relative z-10">
-                       <span className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest mb-3 ${event.type === 'Competition' ? 'bg-red-900/20 text-red-500 border-red-900/30' : event.type === 'Class' ? 'bg-blue-900/20 text-blue-500 border-blue-900/30' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
-                         {event.type}
-                       </span>
-                       <h3 className="text-2xl font-black uppercase italic leading-tight mb-2 pr-10">{event.title}</h3>
-                       <div className="flex flex-wrap gap-4 text-gray-500 text-[10px] font-bold uppercase tracking-widest">
-                         <span className="flex items-center gap-1"><Clock size={12}/> {event.time}</span>
-                         {event.location && <span className="flex items-center gap-1"><MapPin size={12}/> {event.location}</span>}
-                       </div>
-                    </div>
-
-                    <div className="flex flex-col h-full absolute right-0 top-0 bottom-0 bg-[#080808] border-l border-gray-900 opacity-0 group-hover:opacity-100 transition-opacity justify-center px-4 w-[60px] md:w-[80px] z-20">
-                      <button onClick={() => handleDeleteEvent(event._id || event.id)} className="w-full aspect-square flex items-center justify-center bg-[#111] rounded-xl text-gray-600 hover:text-red-500 hover:bg-red-500/10 transition-colors border border-gray-800 focus:opacity-100 relative z-20">
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-gray-500 tracking-widest mb-2">Event Title</label>
+                  <input type="text" value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})} className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 transition-colors" required />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 tracking-widest mb-2">Date</label>
+                    <input type="date" value={newEvent.date} onChange={e => setNewEvent({...newEvent, date: e.target.value})} className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 transition-colors text-gray-400" required />
                   </div>
-               );
-            })}
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 tracking-widest mb-2">Time</label>
+                    <input type="time" value={newEvent.time} onChange={e => setNewEvent({...newEvent, time: e.target.value})} className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 transition-colors text-gray-400" required />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 tracking-widest mb-2">Event Type</label>
+                    <select value={newEvent.type} onChange={e => setNewEvent({...newEvent, type: e.target.value})} className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 transition-colors text-gray-400" required>
+                      <option value="" disabled>Select Type</option>
+                      <option value="Class">Fitness Class</option>
+                      <option value="Workshop">Workshop</option>
+                      <option value="Competition">Competition</option>
+                      <option value="Social">Social</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 tracking-widest mb-2">Location</label>
+                    <input type="text" value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 transition-colors" placeholder="e.g. Main Studio" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-gray-500 tracking-widest mb-2 mt-2">Event Description / Details</label>
+                  <textarea value={newEvent.description || ''} onChange={e => setNewEvent({...newEvent, description: e.target.value})} className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 transition-colors h-24 resize-none" placeholder="Enter full event description..."></textarea>
+                </div>
+              </div>
 
-            {events.length === 0 && (
-               <div className="flex flex-col items-center justify-center p-16 border-2 border-dashed border-gray-900 rounded-3xl opacity-50 h-[300px]">
-                 <CalendarIcon size={48} className="text-gray-700 mb-4" />
-                 <span className="text-gray-500 text-xs font-black uppercase tracking-widest">No upcoming events</span>
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-gray-500 tracking-widest mb-2">Event Cover Image</label>
+                <div className="w-full h-full min-h-[150px] bg-black border-2 border-dashed border-gray-800 hover:border-blue-600 rounded-xl flex flex-col items-center justify-center transition-colors relative overflow-hidden group">
+                  {newEvent.image ? (
+                    <>
+                      <img src={newEvent.image} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-40 transition-opacity" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <span className="bg-blue-600 text-white font-black uppercase text-[10px] tracking-widest px-4 py-2 rounded-lg">Change Image</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center text-gray-600 group-hover:text-blue-500 transition-colors">
+                      <ImageIcon size={32} className="mb-2" />
+                      <span className="font-bold text-xs uppercase tracking-widest">Upload Cover</span>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-sm tracking-widest py-4 rounded-xl transition-all shadow-xl shadow-blue-900/20 active:scale-[0.98]">
+                {editEventId ? 'Save Changes' : 'Schedule Event'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {events.map((ev) => (
+             <div key={ev._id} className="bg-[#111] border border-gray-900 rounded-3xl overflow-hidden shadow-2xl group hover:border-gray-700 transition-all flex flex-col h-full">
+               <div className="relative h-48 bg-black overflow-hidden flex items-center justify-center border-b border-gray-900">
+                 {ev.image ? (
+                   <img src={ev.image} alt={ev.title} className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500" />
+                 ) : (
+                   <ImageIcon size={48} className="text-gray-800" />
+                 )}
+                 <div className="absolute top-4 left-4">
+                   <span className="bg-blue-900/80 backdrop-blur-sm border border-blue-800 text-blue-400 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                     {ev.type}
+                   </span>
+                 </div>
                </div>
-            )}
-          </section>
+               
+               <div className="p-6 flex-1 flex flex-col">
+                 <h3 className="font-black text-xl uppercase tracking-tight italic mb-4">{ev.title}</h3>
+                 
+                 <div className="space-y-2 mb-6 text-gray-400 text-xs font-bold tracking-widest uppercase">
+                   <div className="flex items-center gap-3">
+                     <Calendar size={14} className="text-blue-500" />
+                     <span>{ev.date}</span>
+                   </div>
+                   <div className="flex items-center gap-3">
+                     <Clock size={14} className="text-blue-500" />
+                     <span>{ev.time}</span>
+                   </div>
+                   <div className="flex items-center gap-3">
+                     <MapPin size={14} className="text-blue-500" />
+                     <span>{ev.location || 'TBA'}</span>
+                   </div>
+                 </div>
+                 
+                 <div className="mt-auto flex gap-2 pt-4 border-t border-gray-900">
+                   <button onClick={() => { setEditEventId(ev._id); setNewEvent({ title: ev.title, date: ev.date, time: ev.time, type: ev.type, location: ev.location, description: ev.description || '', image: ev.image }); setIsFormVisible(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+                     <Edit2 size={14} /> Edit
+                   </button>
+                   <button onClick={() => handleDeleteEvent(ev._id)} className="flex-1 bg-red-900/20 hover:bg-red-600 hover:text-white text-red-500 border border-red-900/30 hover:border-red-600 text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                     <Trash2 size={14} /> Delete
+                   </button>
+                 </div>
+               </div>
+             </div>
+          ))}
+          {events.length === 0 && !isFormVisible && (
+            <div className="col-span-full py-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-900 rounded-3xl opacity-50">
+              <Calendar size={48} className="text-gray-700 mb-4" />
+              <p className="text-gray-500 uppercase tracking-widest font-bold text-sm">No upcoming events scheduled.</p>
+            </div>
+          )}
         </div>
+
       </main>
     </div>
   );
 };
 
-export default EventCalendar;
+export default Event;

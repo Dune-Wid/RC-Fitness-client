@@ -1,89 +1,132 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { CalendarDays, ArrowLeft, Clock, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { Search, Calendar, Filter, MapPin, Clock } from 'lucide-react';
+import PublicNavbar from '../components/PublicNavbar';
 
 const PublicEvent = () => {
   const [events, setEvents] = useState([]);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('All');
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await axios.get('https://rc-fitness-backend.vercel.app/api/events').catch(() => ({ data: [] }));
-        const sortedEvents = (res.data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
-        setEvents(sortedEvents);
-      } catch (err) { console.error(err); }
+        const res = await axios.get('https://rc-fitness-backend.vercel.app/api/events');
+        setEvents(res.data);
+      } catch (err) { console.error("Error fetching events:", err); }
     };
     fetchEvents();
   }, []);
 
-  const getDayAndMonth = (dateString) => {
-    if (!dateString) return { day: '--', month: '---' };
-    const date = new Date(dateString);
-    return {
-      day: date.getDate().toString().padStart(2, '0'),
-      month: date.toLocaleString('default', { month: 'short' }).toUpperCase()
-    };
-  };
+  const categories = ['All', 'Class', 'Workshop', 'Competition', 'Social'];
+  
+  const filteredEvents = events.filter(e => {
+    const matchesSearch = e.title.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = category === 'All' || e.type === category;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
-    <div className="bg-[#080808] min-h-screen text-white font-sans selection:bg-red-600">
-      <nav className="border-b border-white/5 bg-black/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-             <ArrowLeft size={20} className="text-red-600" />
-             <span className="font-black text-xs tracking-widest uppercase">Back to Home</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <CalendarDays className="text-red-600" size={24} />
-            <span className="font-black text-xl tracking-tighter uppercase italic">Schedule</span>
-          </div>
-          <div className="w-[100px]"></div>
-        </div>
-      </nav>
+    <div className="bg-[#050505] min-h-screen text-white font-sans selection:bg-blue-600">
+      <PublicNavbar />
 
-      <main className="max-w-5xl mx-auto px-6 py-12 md:py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter italic mb-4">Upcoming <span className="text-red-600">Events</span></h1>
-          <p className="text-gray-400 font-medium max-w-2xl mx-auto">Join our upcoming classes, competitive seminars, and special community gatherings to elevate your journey.</p>
-        </div>
-
-        <div className="space-y-6">
-          {events.map(event => {
-            const { day, month } = getDayAndMonth(event.date);
-            return (
-              <div key={event._id || event.id} className="flex flex-col md:flex-row items-center bg-[#111] rounded-2xl border border-white/5 overflow-hidden hover:border-red-600/30 transition-all duration-500 group relative">
-                {event.image && (
-                  <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity duration-500">
-                    <img src={event.image} alt={event.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
-                  </div>
-                )}
-                <div className="bg-black/80 backdrop-blur-sm p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5 group-hover:bg-red-900/10 transition-colors w-full md:w-40 relative z-10 h-full">
-                  <span className="text-red-600 font-bold uppercase tracking-widest text-sm mb-1">{month}</span>
-                  <span className="text-5xl md:text-6xl font-black italic tracking-tighter text-white">{day}</span>
-                </div>
-                
-                <div className="flex-1 p-8 relative z-10 bg-[#111]/50 backdrop-blur-sm h-full">
-                  <span className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest mb-4 ${event.type === 'Competition' ? 'bg-red-900/30 text-red-400 border-red-900/40' : event.type === 'Class' ? 'bg-blue-900/30 text-blue-400 border-blue-900/40' : 'bg-gray-800/80 text-gray-300 border-gray-700'}`}>
-                    {event.type}
-                  </span>
-                  <h3 className="text-3xl font-black uppercase italic leading-tight mb-4 text-white drop-shadow-md">{event.title}</h3>
-                  <div className="flex flex-wrap gap-6 text-gray-300 text-xs font-bold uppercase tracking-widest">
-                    <span className="flex items-center gap-2 drop-shadow"><Clock size={16} className="text-red-500"/> {event.time}</span>
-                    {event.location && <span className="flex items-center gap-2 drop-shadow"><MapPin size={16} className="text-red-500"/> {event.location}</span>}
-                  </div>
-                </div>
+      <main className="max-w-7xl mx-auto px-6 pt-32 pb-12 flex flex-col md:flex-row gap-10">
+        <aside className="w-full md:w-64 flex-shrink-0">
+          <div className="sticky top-28 bg-[#111] border border-gray-900 rounded-3xl p-6">
+            <h2 className="text-xl font-black uppercase italic tracking-tighter mb-6 flex items-center gap-2">
+              <Filter size={18} className="text-blue-500" /> Filters
+            </h2>
+            
+            <div className="mb-8">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3 block">Search Event</label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Find classes..." 
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 pl-10 text-sm focus:outline-none focus:border-blue-600 transition-colors"
+                />
+                <Search size={16} className="absolute left-4 top-3.5 text-gray-500" />
               </div>
-            );
-          })}
-        </div>
+            </div>
 
-        {events.length === 0 && (
-          <div className="flex flex-col items-center justify-center p-20 border border-dashed border-white/10 rounded-3xl opacity-50 mt-10">
-            <CalendarDays size={48} className="text-gray-600 mb-4" />
-            <span className="text-gray-500 text-sm font-black uppercase tracking-widest">No scheduled events</span>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3 block">Categories</label>
+              <div className="flex flex-col gap-2">
+                {categories.map(cat => (
+                  <button 
+                    key={cat}
+                    onClick={() => setCategory(cat)}
+                    className={`text-left px-4 py-3 rounded-xl text-sm font-bold tracking-wide transition-all ${
+                      category === cat ? 'bg-blue-600/20 text-blue-400 border border-blue-900/50' : 'text-gray-400 hover:bg-gray-900 border border-transparent hover:text-white'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        )}
+        </aside>
+
+        <section className="flex-1">
+          <header className="mb-8 flex justify-between items-end border-b border-gray-900 pb-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter italic">Classes & Events</h1>
+              <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em] mt-2">Book your next session</p>
+            </div>
+            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest hidden md:block">
+              {filteredEvents.length} Upcoming
+            </p>
+          </header>
+
+          {filteredEvents.length === 0 ? (
+            <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-900 rounded-3xl opacity-50">
+              <Calendar size={48} className="text-gray-700 mb-4" />
+              <p className="text-gray-500 uppercase tracking-widest font-bold text-sm">No scheduled events right now.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredEvents.map(event => (
+                <Link to={`/events/${event._id}`} key={event._id} className="bg-[#111] border border-gray-900 rounded-3xl overflow-hidden shadow-xl group hover:border-blue-900/50 transition-all flex flex-col h-full hover:-translate-y-1">
+                  <div className="relative h-48 bg-black overflow-hidden flex items-center justify-center border-b border-gray-900 shrink-0">
+                    {event.image ? (
+                      <img src={event.image} alt={event.title} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <Calendar size={48} className="text-gray-800" />
+                    )}
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-blue-900/80 backdrop-blur-sm border border-blue-800 text-blue-400 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                        {event.type}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h3 className="font-black text-2xl uppercase tracking-tight italic mb-4 line-clamp-2">{event.title}</h3>
+                    
+                    <div className="space-y-3 mt-auto text-gray-400 text-xs font-bold tracking-widest uppercase">
+                      <div className="flex items-center gap-3">
+                        <Calendar size={16} className="text-blue-500" />
+                        <span>{new Date(event.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Clock size={16} className="text-blue-500" />
+                        <span>{event.time}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <MapPin size={16} className="text-blue-500" />
+                        <span className="truncate">{event.location || 'Fitness Center'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
