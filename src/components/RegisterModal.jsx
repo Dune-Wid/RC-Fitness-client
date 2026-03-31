@@ -5,8 +5,7 @@ import { X, User, Activity, Fingerprint } from 'lucide-react';
 const RegisterModal = ({ close, refresh, member }) => {
   const [formData, setFormData] = useState({
     nic: '', fullName: '', age: '', email: '', phone: '', address: '',
-    weight: '', height: '', chest: '', bicep: '',
-    membershipType: 'Basic Monthly', treadmillAccess: false, backupPin: ''
+    weight: '', height: '', chest: '', bicep: '', backupPin: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -64,29 +63,14 @@ const RegisterModal = ({ close, refresh, member }) => {
                <InputGroup label="4-Digit Backup PIN" val={formData.backupPin} type="password" fn={(v) => setFormData({...formData, backupPin: v})} isRed />
             </div>
 
-            {/* Section 2: Membership & Physical */}
+            {/* Section 2: Physicals */}
             <div className="space-y-5">
-               <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em] border-l-2 border-red-600 pl-3">2. Physicals & Plan</h3>
+               <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em] border-l-2 border-red-600 pl-3">2. Physical Stats</h3>
                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-4">
                   <InputGroup label="Weight (kg)" val={formData.weight} type="number" fn={(v) => setFormData({...formData, weight: v})} />
                   <InputGroup label="Height (cm)" val={formData.height} type="number" fn={(v) => setFormData({...formData, height: v})} />
                   <InputGroup label="Chest (in)" val={formData.chest} type="number" fn={(v) => setFormData({...formData, chest: v})} />
                   <InputGroup label="Bicep (in)" val={formData.bicep} type="number" fn={(v) => setFormData({...formData, bicep: v})} />
-               </div>
-               
-               <div className="flex flex-col gap-1.5 mt-2">
-                  <label className="text-[10px] text-gray-400 uppercase font-bold ml-1">Membership Plan</label>
-                  <select className="w-full bg-[#1a1a1a] border border-gray-800 p-3.5 rounded-xl text-sm text-white outline-none focus:border-red-600 transition-colors" value={formData.membershipType} onChange={(e) => setFormData({...formData, membershipType: e.target.value})}>
-                     <option>Basic Monthly</option><option>Pro Athlete</option><option>Elite Yearly</option>
-                  </select>
-               </div>
-               
-               <div className="bg-red-900/5 border border-red-900/20 p-5 rounded-2xl flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-black uppercase">Treadmill Access</p>
-                    <p className="text-[10px] text-gray-500">+Rs. 500 / month</p>
-                  </div>
-                  <input type="checkbox" checked={formData.treadmillAccess} className="w-6 h-6 accent-red-600 cursor-pointer" onChange={(e) => setFormData({...formData, treadmillAccess: e.target.checked})} />
                </div>
 
                <div className="bg-black border border-dashed border-gray-800 p-6 rounded-2xl flex flex-col items-center justify-center text-gray-600 mt-4">

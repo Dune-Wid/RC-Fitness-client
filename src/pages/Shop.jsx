@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
+import InventoryReportModal from '../components/InventoryReportModal';
 import { ShoppingBag, Plus, Edit2, Trash2, Image as ImageIcon, Tag, Package } from 'lucide-react';
 
 const Shop = () => {
@@ -8,6 +9,7 @@ const Shop = () => {
   const [newProduct, setNewProduct] = useState({ name: '', category: '', price: '', stock: '', description: '', images: [] });
   const [editProductId, setEditProductId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -75,12 +77,20 @@ const Shop = () => {
             </h1>
             <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Manage Products & Details</p>
           </div>
-          <button 
-            onClick={() => { setIsFormVisible(!isFormVisible); setEditProductId(null); setNewProduct({ name: '', category: '', price: '', stock: '', description: '', images: [] }); }} 
-            className="w-full lg:w-auto bg-purple-600 hover:bg-purple-700 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl transition-all active:scale-95"
-          >
-            {isFormVisible ? 'Close Form' : <><Plus size={16} className="inline mr-2" /> Add Product</>}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto mt-4 lg:mt-0">
+            <button 
+              onClick={() => setShowReportModal(true)} 
+              className="w-full lg:w-auto bg-[#111] hover:bg-purple-900/20 text-purple-500 border border-purple-900/30 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all active:scale-95"
+            >
+              Generate Stock Report
+            </button>
+            <button 
+              onClick={() => { setIsFormVisible(!isFormVisible); setEditProductId(null); setNewProduct({ name: '', category: '', price: '', stock: '', description: '', images: [] }); }} 
+              className="w-full lg:w-auto bg-purple-600 hover:bg-purple-700 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl transition-all active:scale-95"
+            >
+              {isFormVisible ? 'Close Form' : <><Plus size={14} className="inline mr-2" /> Add Product</>}
+            </button>
+          </div>
         </header>
 
         {isFormVisible && (
@@ -197,6 +207,13 @@ const Shop = () => {
             </div>
           )}
         </div>
+
+        {showReportModal && (
+          <InventoryReportModal 
+            products={products} 
+            onClose={() => setShowReportModal(false)} 
+          />
+        )}
 
       </main>
     </div>

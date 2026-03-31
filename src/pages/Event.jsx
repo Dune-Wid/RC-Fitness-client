@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
+import EventScheduleModal from '../components/EventScheduleModal';
 import { Calendar, Plus, Edit2, Trash2, Image as ImageIcon, MapPin, Clock, Tag } from 'lucide-react';
 
 const Event = () => {
@@ -8,6 +9,7 @@ const Event = () => {
   const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' });
   const [editEventId, setEditEventId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   const fetchEvents = async () => {
     try {
@@ -69,12 +71,20 @@ const Event = () => {
             </h1>
             <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Manage Gym Events & Classes</p>
           </div>
-          <button 
-            onClick={() => { setIsFormVisible(!isFormVisible); setEditEventId(null); setNewEvent({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' }); }} 
-            className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl transition-all active:scale-95"
-          >
-            {isFormVisible ? 'Close Form' : <><Plus size={16} className="inline mr-2" /> Schedule Event</>}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto mt-4 lg:mt-0">
+            <button 
+              onClick={() => setShowScheduleModal(true)} 
+              className="w-full lg:w-auto bg-[#111] hover:bg-blue-900/20 text-blue-500 border border-blue-900/30 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all active:scale-95"
+            >
+              Print Event Schedule
+            </button>
+            <button 
+              onClick={() => { setIsFormVisible(!isFormVisible); setEditEventId(null); setNewEvent({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' }); }} 
+              className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl transition-all active:scale-95"
+            >
+              {isFormVisible ? 'Close Form' : <><Plus size={14} className="inline mr-2" /> Schedule Event</>}
+            </button>
+          </div>
         </header>
 
         {isFormVisible && (
@@ -202,6 +212,13 @@ const Event = () => {
             </div>
           )}
         </div>
+
+        {showScheduleModal && (
+          <EventScheduleModal 
+            events={events} 
+            onClose={() => setShowScheduleModal(false)} 
+          />
+        )}
 
       </main>
     </div>
