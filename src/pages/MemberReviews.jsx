@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import MemberSidebar from '../components/MemberSidebar';
-import { Megaphone, Star, UploadCloud, SlidersHorizontal, Search, CheckCircle } from 'lucide-react';
+import { Megaphone, Star, UploadCloud, SlidersHorizontal, Search, CheckCircle, Trash2 } from 'lucide-react';
 import axios from 'axios';
 
 const MemberReviews = () => {
@@ -32,6 +32,17 @@ const MemberReviews = () => {
         setImageBase64(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this review?")) return;
+    try {
+      await axios.delete(`http://localhost:5000/api/reviews/${id}`);
+      fetchReviews();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete review.");
     }
   };
 
@@ -194,9 +205,14 @@ const MemberReviews = () => {
                   {/* Footer */}
                   <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
                     <span className="text-[9px] font-bold text-gray-500 tracking-widest uppercase">{rev.dateString || 'NEW MEMBER'}</span>
-                    <button className="text-red-500 text-[10px] font-bold uppercase tracking-widest hover:text-red-400 transition-colors">
-                      Read Story
-                    </button>
+                    <div className="flex items-center gap-4">
+                      <button className="text-red-500 text-[10px] font-bold uppercase tracking-widest hover:text-red-400 transition-colors">
+                        Read Story
+                      </button>
+                      <button onClick={() => handleDelete(rev._id)} className="text-gray-600 hover:text-red-500 transition-colors" title="Delete Review">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
