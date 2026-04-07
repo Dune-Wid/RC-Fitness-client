@@ -6,10 +6,21 @@ import axios from 'axios';
 const Classes = () => {
   const [activeTab, setActiveTab] = useState('TODAY');
   const [bookings, setBookings] = useState([]);
+  const [classes, setClasses] = useState([]);
 
   useEffect(() => {
     fetchBookings();
+    fetchClasses();
   }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const { data } = await axios.get('http://localhost:5000/api/classes');
+      setClasses(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchBookings = async () => {
     try {
@@ -45,40 +56,7 @@ const Classes = () => {
     }
   };
 
-  const classes = [
-    {
-      type: 'CORE',
-      time: '08:00 AM - 09:00 AM',
-      name: 'ABS TRAINING',
-      intensity: 'HIGH',
-      intensityColor: 'text-red-500',
-      bgImage: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=2070&auto=format&fit=crop'
-    },
-    {
-      type: 'ENDURANCE',
-      time: '10:30 AM - 11:30 AM',
-      name: 'CARDIO BLAST',
-      intensity: 'EXTREME',
-      intensityColor: 'text-red-600',
-      bgImage: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070&auto=format&fit=crop'
-    },
-    {
-      type: 'FULL BODY',
-      time: '05:00 PM - 06:00 PM',
-      name: 'ZUMBA RHYTHM',
-      intensity: 'MEDIUM',
-      intensityColor: 'text-orange-500',
-      bgImage: 'https://images.unsplash.com/photo-1518310383802-640c2de311b2?q=80&w=2070&auto=format&fit=crop'
-    },
-    {
-      type: 'POWER',
-      time: '07:30 PM - 08:30 PM',
-      name: 'STRENGTH FORGE',
-      intensity: 'VERY HIGH',
-      intensityColor: 'text-red-500',
-      bgImage: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=2070&auto=format&fit=crop'
-    }
-  ];
+
 
   return (
     <div className="flex bg-[#0d0a0a] min-h-screen text-white font-sans">
@@ -141,7 +119,7 @@ const Classes = () => {
                   <div className="mt-auto flex items-center justify-between">
                     <div>
                       <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Intensity</p>
-                      <p className={`text-[10px] font-black tracking-widest uppercase ${cls.intensityColor}`}>{cls.intensity}</p>
+                      <p className={`text-[10px] font-black tracking-widest uppercase ${cls.intensityColor || 'text-red-500'}`}>{cls.intensity}</p>
                     </div>
                     <button 
                       onClick={() => handleJoin(cls)}
