@@ -1,39 +1,28 @@
-import { useState } from 'react';
-import { X, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Plus, Minus, ShoppingBag, ArrowRight, Trash2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const CartSidebar = () => {
-  const { cartItems, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart, clearCart } = useCart();
-  const [isCheckout, setIsCheckout] = useState(false);
-  const [orderComplete, setOrderComplete] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
+  const { cartItems, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart } = useCart();
+  const navigate = useNavigate();
 
   if (!isCartOpen) return null;
 
-  const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-
-  const handleCheckoutSubmit = (e) => {
-    e.preventDefault();
-    // Simulate API call for checkout
-    setTimeout(() => {
-      setOrderComplete(true);
-      clearCart();
-    }, 1000);
-  };
+  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   const closeSidebar = () => {
     setIsCartOpen(false);
-    setTimeout(() => {
-      setIsCheckout(false);
-      setOrderComplete(false);
-      setFormData({ name: '', email: '', phone: '' });
-    }, 500);
+  };
+
+  const handleProceedToCheckout = () => {
+    closeSidebar();
+    navigate('/checkout');
   };
 
   return (
     <>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]" onClick={closeSidebar}></div>
-      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-[#111] border-l border-gray-800 z-[70] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-[#111] border-l border-gray-800 z-[70] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 font-sans">
         
         <div className="flex justify-between items-center p-6 border-b border-gray-900 bg-[#0a0a0a]">
           <h2 className="text-xl font-black uppercase italic tracking-tighter flex items-center gap-3 text-white">
@@ -44,104 +33,62 @@ const CartSidebar = () => {
           </button>
         </div>
 
-        {orderComplete ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-black">
-            <CheckCircle size={64} className="text-green-500 mb-6 animate-bounce" />
-            <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-2">Order Confirmed!</h3>
-            <p className="text-gray-400 text-sm mb-8">Thank you, {formData.name}. Your order has been placed. Please pay at the front-desk upon pickup.</p>
-            <button onClick={closeSidebar} className="w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all">
-              Continue Shopping
-            </button>
-          </div>
-        ) : isCheckout ? (
-          <div className="flex-1 overflow-y-auto p-6 bg-black flex flex-col">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-6">Contact Details</h3>
-            <form id="checkout-form" onSubmit={handleCheckoutSubmit} className="space-y-4 flex-1">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Full Name</label>
-                <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white" placeholder="John Doe" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Email Address</label>
-                <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white" placeholder="john@example.com" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Phone Number</label>
-                <input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white" placeholder="+94 77 XXXXXXX" />
-              </div>
-            </form>
-          </div>
-        ) : (
-          <div className="flex-1 overflow-y-auto p-6 bg-black">
-            {cartItems.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
-                <ShoppingBag size={48} className="text-gray-600 mb-4" />
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">Your cart is empty</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {cartItems.map((item) => (
-                  <div key={item._id} className="flex gap-4 border border-gray-900 rounded-2xl p-4 bg-[#111]">
-                    <div className="w-20 h-20 bg-black rounded-xl overflow-hidden flex items-center justify-center shrink-0">
-                      {item.images && item.images[0] ? (
-                        <img src={item.images[0]} alt={item.name} className="w-full h-full object-contain p-2" />
-                      ) : (
-                        <ShoppingBag className="text-gray-800" />
-                      )}
-                    </div>
-                    <div className="flex-1 flex flex-col justify-center">
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-1">{item.category}</p>
-                      <h4 className="text-sm font-black uppercase text-white line-clamp-1">{item.name}</h4>
-                      <p className="text-purple-400 font-bold text-sm mt-1">LKR {(item.price * item.quantity).toLocaleString()}</p>
-                      <div className="flex items-center gap-4 mt-3">
-                        <div className="flex items-center gap-2 bg-black border border-gray-800 rounded-lg p-1">
-                          <button onClick={() => updateQuantity(item._id, item.quantity - 1)} className="p-1 hover:text-red-500 hover:bg-gray-900 rounded-md transition-colors text-white"><Minus size={14} /></button>
-                          <span className="text-xs font-bold w-4 text-center text-white">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item._id, item.quantity + 1)} className="p-1 hover:text-green-500 hover:bg-gray-900 rounded-md transition-colors text-white"><Plus size={14} /></button>
-                        </div>
-                        <button onClick={() => removeFromCart(item._id)} className="text-[10px] font-bold uppercase tracking-widest text-gray-600 hover:text-red-500 underline underline-offset-4">Remove</button>
+        <div className="flex-1 overflow-y-auto p-6 bg-black">
+          {cartItems.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
+              <ShoppingBag size={48} className="text-gray-600 mb-4" />
+              <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">Your cart is empty</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {cartItems.map((item) => (
+                <div key={item._id} className="flex gap-4 border border-gray-900 rounded-2xl p-4 bg-[#111]">
+                  <div className="w-20 h-20 bg-black rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+                    {item.images && item.images[0] ? (
+                      <img src={item.images[0]} alt={item.name} className="w-full h-full object-contain p-2" />
+                    ) : (
+                      <ShoppingBag className="text-gray-800" />
+                    )}
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-1">{item.category}</p>
+                    <h4 className="text-sm font-black uppercase text-white line-clamp-1">{item.name}</h4>
+                    <p className="text-purple-400 font-bold text-sm mt-1">LKR {(item.price * item.quantity).toLocaleString()}</p>
+                    <div className="flex items-center gap-4 mt-3">
+                      <div className="flex items-center gap-2 bg-black border border-gray-800 rounded-lg p-1">
+                        <button onClick={() => updateQuantity(item._id, item.quantity - 1)} className="p-1 hover:text-red-500 hover:bg-gray-900 rounded-md transition-colors text-white"><Minus size={14} /></button>
+                        <span className="text-xs font-bold w-4 text-center text-white tabular-nums">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item._id, item.quantity + 1)} className="p-1 hover:text-green-500 hover:bg-gray-900 rounded-md transition-colors text-white"><Plus size={14} /></button>
                       </div>
+                      <button onClick={() => removeFromCart(item._id)} className="text-[10px] font-bold uppercase tracking-widest text-gray-600 hover:text-red-500 underline underline-offset-4 flex items-center gap-1">
+                        <Trash2 size={12} /> Remove
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-        {/* Footer */}
-        {!orderComplete && cartItems.length > 0 && (
-          <div className="p-6 border-t border-gray-900 bg-[#0a0a0a]">
-            {isCheckout ? (
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm font-bold uppercase tracking-widest text-gray-400">
-                  <span>Subtotal</span>
-                  <span className="text-white">LKR {totalAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-lg font-black uppercase tracking-tight text-white mb-4">
-                  <span>Total</span>
-                  <span className="text-purple-500">LKR {totalAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex gap-4">
-                  <button onClick={() => setIsCheckout(false)} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] transition-colors">
-                    Back
-                  </button>
-                  <button type="submit" form="checkout-form" className="flex-[2] bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all">
-                    Confirm Order <CheckCircle size={16} />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex justify-between text-lg font-black uppercase tracking-tight text-white mb-4">
-                  <span>Total Amount</span>
-                  <span className="text-purple-500">LKR {totalAmount.toLocaleString()}</span>
-                </div>
-                <button onClick={() => setIsCheckout(true)} className="w-full bg-white hover:bg-gray-200 text-black py-4 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-colors">
-                  Proceed to Checkout <ArrowRight size={16} />
-                </button>
-              </div>
-            )}
+        {cartItems.length > 0 && (
+          <div className="p-8 border-t border-gray-900 bg-[#0a0a0a]">
+            <div className="flex justify-between items-center mb-8">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Subtotal</span>
+              <span className="text-2xl font-black italic text-purple-500 tabular-nums">LKR {subtotal.toLocaleString()}</span>
+            </div>
+            
+            <button 
+              onClick={handleProceedToCheckout}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 shadow-xl shadow-purple-900/20 transition-all hover:-translate-y-1 active:scale-95 group"
+            >
+              Proceed to Checkout
+              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+            
+            <p className="text-center text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-6">
+              Tax & Shipment calculated at checkout
+            </p>
           </div>
         )}
 

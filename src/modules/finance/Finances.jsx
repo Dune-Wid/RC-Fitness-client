@@ -15,7 +15,7 @@ const Finances = () => {
 
   // Forms for Plans and Payments
   const [newPlan, setNewPlan] = useState({ name: '', price: '', duration: '' });
-  const [newPayment, setNewPayment] = useState({ member: '', amount: '', date: '', status: 'Paid', duration: '' });
+  const [newPayment, setNewPayment] = useState({ member: '', amount: '', date: '', status: 'Paid', duration: '', email: '', treadmillAccess: false });
   
   // Edit states
   const [editPlanId, setEditPlanId] = useState(null);
@@ -67,10 +67,14 @@ const Finances = () => {
       try {
         const token = localStorage.getItem('authToken');
         const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/finance/plans/update/${editPlanId}`, submittedPlan, { headers: { 'auth-token': token } });
-        setPlans(plans.map(p => (p._id || p.id) === editPlanId ? res.data : p));
+        setPlans(plans.map(p => String(p._id || p.id) === String(editPlanId) ? res.data : p));
         setEditPlanId(null);
         setNewPlan({ name: '', price: '', duration: '' });
-      } catch (err) { console.error("Error updating DB:", err); }
+        alert("Success: Membership plan updated!");
+      } catch (err) { 
+        console.error("Plan Update Error:", err);
+        alert("Error: Could not update plan. " + (err.response?.data || "Check connection."));
+      }
     } else {
       const tempPlan = { ...submittedPlan, _id: Date.now() };
       setPlans(prev => [...prev, tempPlan]);
@@ -102,12 +106,12 @@ const Finances = () => {
         const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/finance/payments/update/${editPaymentId}`, submittedPayment, { headers: { 'auth-token': token } });
         setPayments(payments.map(p => (p._id || p.id) === editPaymentId ? res.data : p));
         setEditPaymentId(null);
-        setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '' });
+        setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '', email: '', treadmillAccess: false });
       } catch (err) { console.error("Error updating DB:", err); }
     } else {
       const tempPayment = { ...submittedPayment, _id: Date.now() };
       setPayments(prev => [...prev, tempPayment]);
-      setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '' });
+      setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '', email: '', treadmillAccess: false });
       try {
         const token = localStorage.getItem('authToken');
         await axios.post('https://rc-fitness-backend.vercel.app/api/finance/payments/add', submittedPayment, { headers: { 'auth-token': token } });
@@ -178,6 +182,55 @@ const Finances = () => {
              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-purple-500"><ShoppingBag size={64}/></div>
             <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Shop Revenue</p>
             <h2 className="text-4xl font-black italic tracking-tighter text-purple-500 z-10">LKR {shopRevenue.toLocaleString()}</h2>
+          </div>
+        </div>
+
+        {/* Visual Reports Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+          <div className="bg-[#111] border border-gray-900 rounded-3xl p-8 shadow-xl">
+             <h3 className="text-xs font-black uppercase tracking-[0.2em] mb-6 text-gray-500 flex items-center gap-2">
+               <BarChart3 size={14} className="text-red-500" /> Revenue Breakdown
+             </h3>
+             <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Memberships</span>
+                    <span className="text-sm font-black italic">LKR {memberPaymentsIncome.toLocaleString()}</span>
+                  </div>
+                  <div className="h-2 bg-black rounded-full overflow-hidden border border-gray-900">
+                    <div 
+                      className="h-full bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.3)]" 
+                      style={{ width: `${totalIncome > 0 ? (memberPaymentsIncome / totalIncome) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Shop Sales</span>
+                    <span className="text-sm font-black italic">LKR {shopRevenue.toLocaleString()}</span>
+                  </div>
+                  <div className="h-2 bg-black rounded-full overflow-hidden border border-gray-900">
+                    <div 
+                      className="h-full bg-purple-500 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.3)]" 
+                      style={{ width: `${totalIncome > 0 ? (shopRevenue / totalIncome) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-gray-900 mt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                  <span className="text-gray-600">Inventory Utilization</span>
+                  <span className="text-green-500">{soldOutProducts.length} Items Sold Out</span>
+                </div>
+             </div>
+          </div>
+
+          <div className="bg-[#111] border border-gray-900 rounded-3xl p-8 shadow-xl flex flex-col items-center justify-center text-center relative overflow-hidden">
+             <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 to-transparent pointer-events-none"></div>
+             <BarChart3 className="text-gray-800 mb-4" size={48} />
+             <h3 className="text-sm font-black uppercase tracking-widest mb-2">Net Profit Margin</h3>
+             <h2 className={`text-5xl font-black italic tracking-tighter ${totalIncome - totalOutgoing >= 0 ? 'text-white' : 'text-red-500'}`}>
+                {totalIncome > 0 ? (((totalIncome - totalOutgoing) / totalIncome) * 100).toFixed(1) : 0}%
+             </h2>
+             <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-gray-500 mt-4 italic">Updated Real-time</p>
           </div>
         </div>
 
@@ -282,7 +335,7 @@ const Finances = () => {
                              key={m._id} 
                              onMouseDown={(e) => e.preventDefault()}
                              onClick={() => {
-                               setNewPayment({...newPayment, member: m.fullName});
+                               setNewPayment({...newPayment, member: m.fullName, email: m.email || ''});
                                setShowMemberDropdown(false);
                              }}
                              className="p-3 hover:bg-green-600/20 hover:text-green-500 cursor-pointer text-sm transition-colors border-b border-gray-800/50 last:border-0"
@@ -481,8 +534,16 @@ const Finances = () => {
           )}
 
           {activeTab === 'dashboard' && (
-             <div className="flex flex-col items-center justify-center p-12 opacity-50 my-10 border-2 border-dashed border-gray-900 rounded-3xl">
-               <span className="text-gray-500 text-xs font-black uppercase tracking-[0.2em]">Select a module above to view details</span>
+             <div className="flex flex-col items-center justify-center p-20 my-10 bg-[#0a0a0a] border border-gray-900 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+               <div className="absolute inset-0 bg-gradient-to-b from-red-600/5 to-transparent"></div>
+               <BarChart3 className="text-gray-900 mb-6 group-hover:text-red-600/20 transition-colors duration-500" size={80} />
+               <span className="text-gray-500 text-[10px] font-black uppercase tracking-[0.5em] mb-2">Ready for Analysis</span>
+               <h3 className="text-xl font-bold uppercase italic tracking-tighter text-gray-400">Select a management module above</h3>
+               <div className="mt-8 flex gap-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-800 animate-pulse delay-75"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-800 animate-pulse delay-150"></div>
+               </div>
              </div>
           )}
         </div>

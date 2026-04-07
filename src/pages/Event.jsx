@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import { Calendar, Plus, Edit2, Trash2, Image as ImageIcon, MapPin, Clock, Tag } from 'lucide-react';
+import { Calendar, Plus, Edit2, Trash2, Image as ImageIcon, MapPin, Clock, Tag, Users, X as XIcon, Mail } from 'lucide-react';
 
 const Event = () => {
   const [events, setEvents] = useState([]);
+  const [attendees, setAttendees] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' });
   const [editEventId, setEditEventId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [loadingAttendees, setLoadingAttendees] = useState(false);
 
   const fetchEvents = async () => {
     try {
@@ -56,6 +59,17 @@ const Event = () => {
       await axios.delete(`https://rc-fitness-backend.vercel.app/api/events/delete/${id}`, { headers: { 'auth-token': token } });
       fetchEvents();
     } catch (err) { console.error("Error deleting event:", err); }
+  };
+
+  const fetchAttendees = async (eventId) => {
+    setLoadingAttendees(true);
+    setSelectedEvent(events.find(e => e._id === eventId));
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await axios.get(`https://rc-fitness-backend.vercel.app/api/events/registrations/${eventId}`, { headers: { 'auth-token': token } });
+      setAttendees(res.data);
+    } catch (err) { console.error(err); }
+    finally { setLoadingAttendees(false); }
   };
 
   return (
@@ -184,6 +198,13 @@ const Event = () => {
                    </div>
                  </div>
                  
+                 <button 
+                    onClick={() => fetchAttendees(ev._id)}
+                    className="w-full mb-4 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-900/30 rounded-xl py-3 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                  >
+                    <Users size={14} /> View Attendees
+                  </button>
+
                  <div className="mt-auto flex gap-2 pt-4 border-t border-gray-900">
                    <button onClick={() => { setEditEventId(ev._id); setNewEvent({ title: ev.title, date: ev.date, time: ev.time, type: ev.type, location: ev.location, description: ev.description || '', image: ev.image }); setIsFormVisible(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
                      <Edit2 size={14} /> Edit
@@ -202,6 +223,54 @@ const Event = () => {
             </div>
           )}
         </div>
+
+        {/* Attendees Modal */}
+        {selectedEvent && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+            <div className="bg-[#111] border border-gray-800 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-300">
+              <div className="p-8 border-b border-gray-900 bg-[#0a0a0a] flex justify-between items-center text-white">
+                <div>
+                   <h2 className="text-2xl font-black uppercase italic tracking-tighter leading-none">{selectedEvent.title}</h2>
+                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-2">Registration List</p>
+                </div>
+                <button onClick={() => setSelectedEvent(null)} className="p-2 hover:bg-gray-900 rounded-full transition-colors"><XIcon size={24} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 space-y-4">
+                 {loadingAttendees ? (
+                   <p className="text-center text-blue-500 font-bold uppercase text-xs animate-pulse">Loading participants...</p>
+                 ) : attendees.length === 0 ? (
+                   <div className="text-center py-10 opacity-30">
+                      <Users size={48} className="mx-auto mb-4" />
+                      <p className="font-black uppercase tracking-widest text-sm">No registrations yet.</p>
+                   </div>
+                 ) : (
+                   attendees.map((at, i) => (
+                     <div key={i} className="bg-black border border-gray-800 rounded-2xl p-4 flex items-center justify-between hover:border-blue-900/50 transition-colors group">
+                        <div className="flex items-center gap-4">
+                           <div className="w-10 h-10 bg-blue-600/10 rounded-full flex items-center justify-center text-blue-500 font-black italic">{at.userName.charAt(0)}</div>
+                           <div>
+                              <h4 className="font-black uppercase tracking-tight text-white">{at.userName}</h4>
+                              <div className="flex items-center gap-2 text-gray-500 text-[10px] font-bold">
+                                 <Mail size={10} /> {at.userEmail}
+                              </div>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">Registered on</p>
+                           <p className="text-[10px] font-black text-white">{new Date(at.registrationDate).toLocaleDateString()}</p>
+                        </div>
+                     </div>
+                   ))
+                 )}
+              </div>
+              
+              <div className="p-6 bg-[#0a0a0a] border-t border-gray-900">
+                 <button onClick={() => setSelectedEvent(null)} className="w-full bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-colors">Close List</button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
     </div>
