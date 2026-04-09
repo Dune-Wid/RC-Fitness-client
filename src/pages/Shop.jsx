@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import { ShoppingBag, Plus, Edit2, Trash2, Image as ImageIcon, Tag, Package, ClipboardList, Ticket, ShieldCheck, ShieldAlert } from 'lucide-react';
+import InventoryReportModal from '../components/InventoryReportModal';
+import { ShoppingBag, Plus, Edit2, Trash2, Image as ImageIcon, Tag, Package } from 'lucide-react';
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
@@ -13,7 +14,7 @@ const Shop = () => {
   const [newPromo, setNewPromo] = useState({ code: '', discountPercentage: '' });
   const [editProductId, setEditProductId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -160,6 +161,20 @@ const Shop = () => {
               </button>
             )}
           </div>
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto mt-4 lg:mt-0">
+            <button 
+              onClick={() => setShowReportModal(true)} 
+              className="w-full lg:w-auto bg-[#111] hover:bg-purple-900/20 text-purple-500 border border-purple-900/30 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all active:scale-95"
+            >
+              Generate Stock Report
+            </button>
+            <button 
+              onClick={() => { setIsFormVisible(!isFormVisible); setEditProductId(null); setNewProduct({ name: '', category: '', price: '', stock: '', description: '', images: [] }); }} 
+              className="w-full lg:w-auto bg-purple-600 hover:bg-purple-700 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl transition-all active:scale-95"
+            >
+              {isFormVisible ? 'Close Form' : <><Plus size={14} className="inline mr-2" /> Add Product</>}
+            </button>
+          </div>
         </header>
 
         {activeTab === 'inventory' && (
@@ -181,11 +196,10 @@ const Shop = () => {
                   <label className="block text-[10px] uppercase font-bold text-gray-500 tracking-widest mb-2">Category</label>
                   <select value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-gray-400" required>
                     <option value="" disabled>Select Category</option>
-                    <option value="Whey Protein">Whey Protein</option>
-                    <option value="Mass Gainer">Mass Gainer</option>
-                    <option value="Pre-Workout">Pre-Workout</option>
-                    <option value="BCAA / EAA">BCAA / EAA</option>
-                    <option value="Vitamins">Vitamins</option>
+                    <option value="WheyProtein">Whey Protein</option>
+                    <option value="MassGainer">Mass Gainer</option>
+                    <option value="Creatine">Creatine</option>
+                    <option value="PreWorkout">Pre-Workout</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
@@ -408,6 +422,13 @@ const Shop = () => {
               {promos.length === 0 && <p className="col-span-full text-center text-gray-600 text-xs font-black uppercase tracking-widest py-10 opacity-50">No promotions active.</p>}
             </div>
           </section>
+        )}
+
+        {showReportModal && (
+          <InventoryReportModal 
+            products={products} 
+            onClose={() => setShowReportModal(false)} 
+          />
         )}
 
       </main>

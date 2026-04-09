@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import { Calendar, Plus, Edit2, Trash2, Image as ImageIcon, MapPin, Clock, Tag, Users, X as XIcon, Mail } from 'lucide-react';
+import EventScheduleModal from '../components/EventScheduleModal';
+import { Calendar, Plus, Edit2, Trash2, Image as ImageIcon, MapPin, Clock, Tag } from 'lucide-react';
 
 const Event = () => {
   const [events, setEvents] = useState([]);
@@ -10,7 +11,7 @@ const Event = () => {
   const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' });
   const [editEventId, setEditEventId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [loadingAttendees, setLoadingAttendees] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   const fetchEvents = async () => {
     try {
@@ -83,12 +84,20 @@ const Event = () => {
             </h1>
             <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Manage Gym Events & Classes</p>
           </div>
-          <button 
-            onClick={() => { setIsFormVisible(!isFormVisible); setEditEventId(null); setNewEvent({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' }); }} 
-            className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl transition-all active:scale-95"
-          >
-            {isFormVisible ? 'Close Form' : <><Plus size={16} className="inline mr-2" /> Schedule Event</>}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto mt-4 lg:mt-0">
+            <button 
+              onClick={() => setShowScheduleModal(true)} 
+              className="w-full lg:w-auto bg-[#111] hover:bg-blue-900/20 text-blue-500 border border-blue-900/30 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all active:scale-95"
+            >
+              Print Event Schedule
+            </button>
+            <button 
+              onClick={() => { setIsFormVisible(!isFormVisible); setEditEventId(null); setNewEvent({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' }); }} 
+              className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl transition-all active:scale-95"
+            >
+              {isFormVisible ? 'Close Form' : <><Plus size={14} className="inline mr-2" /> Schedule Event</>}
+            </button>
+          </div>
         </header>
 
         {isFormVisible && (
@@ -224,52 +233,11 @@ const Event = () => {
           )}
         </div>
 
-        {/* Attendees Modal */}
-        {selectedEvent && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
-            <div className="bg-[#111] border border-gray-800 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-300">
-              <div className="p-8 border-b border-gray-900 bg-[#0a0a0a] flex justify-between items-center text-white">
-                <div>
-                   <h2 className="text-2xl font-black uppercase italic tracking-tighter leading-none">{selectedEvent.title}</h2>
-                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-2">Registration List</p>
-                </div>
-                <button onClick={() => setSelectedEvent(null)} className="p-2 hover:bg-gray-900 rounded-full transition-colors"><XIcon size={24} /></button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-8 space-y-4">
-                 {loadingAttendees ? (
-                   <p className="text-center text-blue-500 font-bold uppercase text-xs animate-pulse">Loading participants...</p>
-                 ) : attendees.length === 0 ? (
-                   <div className="text-center py-10 opacity-30">
-                      <Users size={48} className="mx-auto mb-4" />
-                      <p className="font-black uppercase tracking-widest text-sm">No registrations yet.</p>
-                   </div>
-                 ) : (
-                   attendees.map((at, i) => (
-                     <div key={i} className="bg-black border border-gray-800 rounded-2xl p-4 flex items-center justify-between hover:border-blue-900/50 transition-colors group">
-                        <div className="flex items-center gap-4">
-                           <div className="w-10 h-10 bg-blue-600/10 rounded-full flex items-center justify-center text-blue-500 font-black italic">{at.userName.charAt(0)}</div>
-                           <div>
-                              <h4 className="font-black uppercase tracking-tight text-white">{at.userName}</h4>
-                              <div className="flex items-center gap-2 text-gray-500 text-[10px] font-bold">
-                                 <Mail size={10} /> {at.userEmail}
-                              </div>
-                           </div>
-                        </div>
-                        <div className="text-right">
-                           <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">Registered on</p>
-                           <p className="text-[10px] font-black text-white">{new Date(at.registrationDate).toLocaleDateString()}</p>
-                        </div>
-                     </div>
-                   ))
-                 )}
-              </div>
-              
-              <div className="p-6 bg-[#0a0a0a] border-t border-gray-900">
-                 <button onClick={() => setSelectedEvent(null)} className="w-full bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-colors">Close List</button>
-              </div>
-            </div>
-          </div>
+        {showScheduleModal && (
+          <EventScheduleModal 
+            events={events} 
+            onClose={() => setShowScheduleModal(false)} 
+          />
         )}
 
       </main>

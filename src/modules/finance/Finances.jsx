@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../../components/Sidebar';
-import { CreditCard, DollarSign, Plus, Trash2, Calendar, FileText, Edit2, TrendingUp, BarChart3, Wallet, Users, ShoppingBag, Banknote, TrendingDown } from 'lucide-react';
+import ReceiptModal from '../../components/ReceiptModal';
+import {  Plus, Trash2, Calendar, FileText, Edit2, TrendingUp, BarChart3,  Users, ShoppingBag, Banknote, TrendingDown ,Receipt} from 'lucide-react';
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -15,13 +16,16 @@ const Finances = () => {
 
   // Forms for Plans and Payments
   const [newPlan, setNewPlan] = useState({ name: '', price: '', duration: '' });
-  const [newPayment, setNewPayment] = useState({ member: '', amount: '', date: '', status: 'Paid', duration: '', email: '', treadmillAccess: false });
+  const [newPayment, setNewPayment] = useState({ member: '', amount: '', date: new Date().toISOString().split('T')[0], status: 'Paid', duration: '', email: '', treadmillAccess: false, planName: '' });
   
   // Edit states
   const [editPlanId, setEditPlanId] = useState(null);
   const [editPaymentId, setEditPaymentId] = useState(null);
   const [editStaffId, setEditStaffId] = useState(null);
   const [editSalaryValue, setEditSalaryValue] = useState('');
+
+  // Receipt Modal
+  const [selectedPayment, setSelectedPayment] = useState(null);
 
   const fetchFinanceData = async () => {
     try {
@@ -54,7 +58,6 @@ const Finances = () => {
 
   const totalIncome = memberPaymentsIncome + shopRevenue;
   const totalOutgoing = staff.reduce((acc, s) => acc + (Number(s.salary) || 0), 0);
-  const totalProfit = totalIncome - totalOutgoing;
 
   // --- PLANS HANDLERS ---
   const handleAddPlan = async (e) => {
@@ -99,23 +102,47 @@ const Finances = () => {
   const handleAddPayment = async (e) => {
     e.preventDefault();
     if (!newPayment.member || !newPayment.amount || !newPayment.date) return;
-    const submittedPayment = { ...newPayment, amount: Number(newPayment.amount) };
+    
+    // Auto-fill email if they typed the name manually instead of selecting
+    let userEmail = newPayment.email;
+    if (!userEmail) {
+      const foundMember = members.find(m => m.fullName.toLowerCase() === newPayment.member.toLowerCase());
+      if (foundMember) userEmail = foundMember.email;
+    }
+
+    const submittedPayment = { ...newPayment, email: userEmail, amount: Number(newPayment.amount) };
     if (editPaymentId) {
       try {
         const token = localStorage.getItem('authToken');
         const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/finance/payments/update/${editPaymentId}`, submittedPayment, { headers: { 'auth-token': token } });
         setPayments(payments.map(p => (p._id || p.id) === editPaymentId ? res.data : p));
         setEditPaymentId(null);
-        setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '', email: '', treadmillAccess: false });
+        setNewPayment({ member: '', amount: '', date: new Date().toISOString().split('T')[0], status: 'Paid', duration: '', email: '', treadmillAccess: false, planName: '' });
       } catch (err) { console.error("Error updating DB:", err); }
     } else {
       const tempPayment = { ...submittedPayment, _id: Date.now() };
       setPayments(prev => [...prev, tempPayment]);
-      setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '', email: '', treadmillAccess: false });
+      setNewPayment({ member: '', amount: '', date: new Date().toISOString().split('T')[0], status: 'Paid', duration: '', email: '', treadmillAccess: false, planName: '' });
       try {
         const token = localStorage.getItem('authToken');
-        await axios.post('https://rc-fitness-backend.vercel.app/api/finance/payments/add', submittedPayment, { headers: { 'auth-token': token } });
+        const res = await axios.post('https://rc-fitness-backend.vercel.app/api/finance/payments/add', submittedPayment, { headers: { 'auth-token': token } });
         fetchFinanceData();
+        
+        const memberUser = members.find(m => m.fullName.toLowerCase() === newPayment.member.toLowerCase());
+        if (memberUser && newPayment.planName) {
+           await axios.put(`https://rc-fitness-backend.vercel.app/api/user/update/${memberUser._id}`, {
+             membershipType: newPayment.planName,
+             treadmillAccess: newPayment.treadmillAccess
+           }, { headers: { 'auth-token': token } }).catch(e => console.error(e));
+        }
+
+        // Notify user about email status
+        if (res.data.emailError) {
+          alert("Payment recorded, but " + res.data.emailError);
+        } else if (res.data.emailSent) {
+          alert("Payment recorded and Invoice Email Sent Successfully!");
+        }
+
       } catch (err) { console.error("Error adding to DB:", err); }
     }
   };
@@ -155,6 +182,21 @@ const Finances = () => {
     return diffDays > 0 ? diffDays : 0;
   };
 
+  const handleDownloadReport = () => {
+    const headers = ['Member', 'Date', 'Duration', 'Amount', 'Status'];
+    const csvContent = [
+      headers.join(','),
+      ...payments.map(p => `"${p.member}","${p.date}","${p.duration || 'N/A'}","${p.amount}","${p.status}"`)
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payment_report_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex bg-[#080808] min-h-screen text-white font-sans">
       <Sidebar />
@@ -175,8 +217,8 @@ const Finances = () => {
           </div>
           <div className="bg-[#111] border border-green-900/30 rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-2xl relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-green-500"><TrendingUp size={64}/></div>
-            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Member Payments</p>
-            <h2 className="text-4xl font-black italic tracking-tighter text-green-500 z-10">LKR {memberPaymentsIncome.toLocaleString()}</h2>
+            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Total Income</p>
+            <h2 className="text-4xl font-black italic tracking-tighter text-green-500 z-10">LKR {totalIncome.toLocaleString()}</h2>
           </div>
           <div className="bg-[#111] border border-purple-900/30 rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-2xl relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-purple-500"><ShoppingBag size={64}/></div>
@@ -268,9 +310,9 @@ const Finances = () => {
               <form onSubmit={handleAddPlan} className="mb-8 bg-black p-4 rounded-2xl border border-gray-800">
                 <h3 className="text-[10px] font-black uppercase text-gray-500 mb-4 tracking-widest">{editPlanId ? 'Edit Plan' : 'Add New Plan'}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <input type="text" placeholder="Plan Name" value={newPlan.name} onChange={(e) => setNewPlan({...newPlan, name: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors" />
-                  <input type="number" placeholder="Price (LKR)" value={newPlan.price} onChange={(e) => setNewPlan({...newPlan, price: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors" />
-                  <input type="text" placeholder="Duration (e.g. 1 Month)" value={newPlan.duration} onChange={(e) => setNewPlan({...newPlan, duration: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors" />
+                  <input type="text" required placeholder="Plan Name" value={newPlan.name} onChange={(e) => setNewPlan({...newPlan, name: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors" />
+                  <input type="number" required placeholder="Price (LKR)" value={newPlan.price} onChange={(e) => setNewPlan({...newPlan, price: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors" />
+                  <input type="text" required placeholder="Duration (e.g. 1 Month)" value={newPlan.duration} onChange={(e) => setNewPlan({...newPlan, duration: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors" />
                 </div>
                 <div className="flex gap-4">
                   <button type="submit" className="flex-1 bg-red-600 hover:bg-red-700 text-white font-black uppercase text-xs tracking-widest py-3 rounded-xl transition-all flex items-center justify-center gap-2">
@@ -309,7 +351,10 @@ const Finances = () => {
             <section className="bg-[#111] border border-gray-900 rounded-3xl p-6 lg:p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4">
               <div className="flex items-center gap-3 mb-6 border-b border-gray-900 pb-4">
                 <Banknote className="text-green-500" size={24} />
-                <h2 className="text-2xl font-black uppercase italic tracking-wider">Member Payments</h2>
+                <h2 className="text-2xl font-black uppercase italic tracking-wider flex-1">Member Payments</h2>
+                <button type="button" onClick={handleDownloadReport} className="bg-[#111] hover:bg-green-600/10 text-green-500 border border-green-900/30 font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+                  <FileText size={14} /> Generate Report
+                </button>
               </div>
 
               <form onSubmit={handleAddPayment} className="mb-8 bg-black p-4 rounded-2xl border border-gray-800">
@@ -318,6 +363,7 @@ const Finances = () => {
                   <div className="relative">
                     <input 
                       type="text" 
+                      required
                       placeholder="Search Member..." 
                       value={newPayment.member} 
                       onChange={(e) => {
@@ -335,7 +381,7 @@ const Finances = () => {
                              key={m._id} 
                              onMouseDown={(e) => e.preventDefault()}
                              onClick={() => {
-                               setNewPayment({...newPayment, member: m.fullName, email: m.email || ''});
+                               setNewPayment({...newPayment, member: m.fullName, email: m.email});
                                setShowMemberDropdown(false);
                              }}
                              className="p-3 hover:bg-green-600/20 hover:text-green-500 cursor-pointer text-sm transition-colors border-b border-gray-800/50 last:border-0"
@@ -348,10 +394,11 @@ const Finances = () => {
                     )}
                   </div>
                   <select 
+                    required
                     onChange={(e) => {
                       const selectedPlan = plans.find(p => String(p._id || p.id) === String(e.target.value));
                       if (selectedPlan) {
-                        setNewPayment({ ...newPayment, amount: selectedPlan.price, duration: selectedPlan.duration });
+                        setNewPayment({ ...newPayment, planName: selectedPlan.name, amount: Number(selectedPlan.price) + (newPayment.treadmillAccess ? 500 : 0), duration: selectedPlan.duration });
                       }
                     }} 
                     className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600 transition-colors text-gray-400"
@@ -362,13 +409,32 @@ const Finances = () => {
                       <option key={p._id || p.id} value={p._id || p.id}>{p.name} - LKR {p.price}</option>
                     ))}
                   </select>
-                  <input type="number" placeholder="Amount (LKR)" value={newPayment.amount} onChange={(e) => setNewPayment({...newPayment, amount: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600 transition-colors" />
+                  <input type="number" required placeholder="Amount (LKR)" value={newPayment.amount} onChange={(e) => setNewPayment({...newPayment, amount: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600 transition-colors" />
                   <div className="grid grid-cols-2 gap-4">
-                    <input type="date" value={newPayment.date} onChange={(e) => setNewPayment({...newPayment, date: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600 transition-colors text-gray-400" />
-                    <select value={newPayment.status} onChange={(e) => setNewPayment({...newPayment, status: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600 transition-colors text-gray-400">
+                    <input type="date" required value={newPayment.date} onChange={(e) => setNewPayment({...newPayment, date: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600 transition-colors text-gray-400" />
+                    <select required value={newPayment.status} onChange={(e) => setNewPayment({...newPayment, status: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600 transition-colors text-gray-400">
                       <option value="Paid">Paid</option>
                       <option value="Pending">Pending</option>
                     </select>
+                  </div>
+                  <div className="bg-green-900/5 border border-green-900/20 p-4 rounded-xl flex items-center justify-between col-span-1 xl:col-span-2">
+                    <div>
+                      <p className="text-sm font-black uppercase text-gray-400">Treadmill Access</p>
+                      <p className="text-[10px] text-gray-600">+Rs. 500 / month</p>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      className="w-5 h-5 accent-green-600 cursor-pointer" 
+                      checked={newPayment.treadmillAccess || false}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        setNewPayment(prev => ({
+                           ...prev,
+                           treadmillAccess: isChecked,
+                           amount: isChecked ? Number(prev.amount || 0) + 500 : Math.max(0, Number(prev.amount || 0) - 500)
+                        }));
+                      }}
+                    />
                   </div>
                 </div>
                 <div className="flex gap-4">
@@ -376,7 +442,7 @@ const Finances = () => {
                     {editPaymentId ? <><Edit2 size={16} /> Update Payment</> : <><Plus size={16} /> Record Payment</>}
                   </button>
                   {editPaymentId && (
-                    <button type="button" onClick={() => { setEditPaymentId(null); setNewPayment({ member: '', amount: '', date: '', status: 'Paid', duration: '' }); }} className="bg-gray-800 hover:bg-gray-700 text-white font-black uppercase text-xs tracking-widest px-6 py-3 rounded-xl transition-all">Cancel</button>
+                    <button type="button" onClick={() => { setEditPaymentId(null); setNewPayment({ member: '', amount: '', date: new Date().toISOString().split('T')[0], status: 'Paid', duration: '', email: '' }); }} className="bg-gray-800 hover:bg-gray-700 text-white font-black uppercase text-xs tracking-widest px-6 py-3 rounded-xl transition-all">Cancel</button>
                   )}
                 </div>
               </form>
@@ -427,6 +493,12 @@ const Finances = () => {
                        <button onClick={() => handleDeletePayment(payment._id || payment.id)} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors ml-2">
                          <Trash2 size={18} />
                        </button>
+                       <button onClick={() => { setSelectedPayment(payment); }} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 transition-colors">
+                        <Receipt size={18} />
+                      </button>
+                      {selectedPayment && (
+                        <ReceiptModal payment={selectedPayment} onClose={() => setSelectedPayment(null)} />
+                      )}
                      </div>
                    </div>
                   );

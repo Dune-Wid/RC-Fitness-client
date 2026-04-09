@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { User, Activity, CreditCard, LogOut, Weight, Ruler } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import MemberSidebar from '../components/MemberSidebar';
 
 const MemberProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -29,18 +30,24 @@ const MemberProfile = () => {
   if (!profile) return <div className="h-screen bg-black flex items-center justify-center text-red-600 font-bold animate-pulse">LOADING PROFILE...</div>;
 
   return (
-    <div className="min-h-screen bg-[#080808] text-white p-8 lg:p-16">
-      <header className="max-w-6xl mx-auto flex justify-between items-center mb-12">
-        <div>
-          <h1 className="text-4xl font-black uppercase tracking-tighter italic">Member Profile</h1>
-          <p className="text-gray-500 font-bold uppercase text-[10px] tracking-widest mt-1">Welcome back, {profile.fullName}</p>
-        </div>
-        <button onClick={handleLogout} className="flex items-center gap-2 text-gray-500 hover:text-red-600 transition-colors font-bold uppercase text-xs">
-          <LogOut size={18} /> Logout
-        </button>
-      </header>
+    <div className="flex bg-[#0d0a0a] min-h-screen text-white">
+      <MemberSidebar />
+      <div className="flex-1 p-6 lg:p-12 lg:ml-64 relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-[20%] right-[10%] w-[40%] h-[40%] bg-red-900/10 blur-[150px] rounded-full pointer-events-none"></div>
 
-      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-6xl mx-auto pt-16 lg:pt-0 relative z-10">
+          <header className="flex justify-between items-center mb-12">
+            <div>
+              <h1 className="text-4xl font-black uppercase tracking-tighter italic">Member Profile</h1>
+              <p className="text-gray-500 font-bold uppercase text-[10px] tracking-widest mt-1">Welcome back, {profile.fullName}</p>
+            </div>
+            <button onClick={handleLogout} className="flex items-center gap-2 text-gray-500 hover:text-red-600 transition-colors font-bold uppercase text-xs">
+              <LogOut size={18} /> Logout
+            </button>
+          </header>
+
+          <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Personal Details Card */}
         <div className="bg-[#111] border border-gray-900 rounded-[2.5rem] p-10 space-y-8">
            <div className="flex flex-col items-center">
@@ -72,7 +79,9 @@ const MemberProfile = () => {
               </div>
            </div>
         </div>
-      </main>
+          </main>
+        </div>
+      </div>
     </div>
   );
 };
