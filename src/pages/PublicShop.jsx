@@ -21,7 +21,7 @@ const PublicShop = () => {
     fetchProducts();
   }, []);
 
-  const categories = ['All', 'Supplements', 'Apparel', 'Equipment', 'Accessories', 'Other'];
+  const categories = ['All', 'Whey Protein', 'Mass Gainer', 'Pre-Workout', 'BCAA / EAA', 'Vitamins', 'Other'];
   
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
@@ -80,7 +80,7 @@ const PublicShop = () => {
         <section className="flex-1">
           <header className="mb-8 flex justify-between items-end border-b border-gray-900 pb-4">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter italic">Pro Shop</h1>
+              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter italic">RC Supplements</h1>
               <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em] mt-2">Fuel your performance</p>
             </div>
             <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest hidden md:block">

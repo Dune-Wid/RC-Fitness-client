@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Calendar, Dumbbell, Clock, MapPin, Users } from 'lucide-react';
+import { ArrowLeft, Calendar, Dumbbell, Clock, MapPin, Users, CheckCircle } from 'lucide-react';
 
 const PublicEventDetails = () => {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '' });
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -20,8 +25,36 @@ const PublicEventDetails = () => {
     fetchEvent();
   }, [id]);
 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    try {
+      await axios.post(`https://rc-fitness-backend.vercel.app/api/events/register/${id}`, {
+        userName: formData.name,
+        userEmail: formData.email
+      });
+      setRegistered(true);
+    } catch (err) {
+      setError("Registration failed. Please try again.");
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-blue-500 text-sm font-bold uppercase tracking-widest">Loading...</div>;
-  if (!event) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-red-500 text-sm font-bold uppercase tracking-widest">Event Not Found</div>;
+  
+  if (!event) return (
+    <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-center">
+      <Calendar size={48} className="text-gray-800 mb-4" />
+      <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white mb-2">Event Not Found</h2>
+      <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-8">This event may have already occurred or was removed.</p>
+      <Link to="/events" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2">
+        <ArrowLeft size={14} /> Back to Events
+      </Link>
+    </div>
+  );
 
   return (
     <div className="bg-[#050505] min-h-screen text-white font-sans selection:bg-blue-600">
@@ -92,14 +125,59 @@ const PublicEventDetails = () => {
               </p>
             </div>
 
-            <button 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 transition-all hover:shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:-translate-y-1 active:scale-95"
-            >
-              <Users size={20} /> RSVP at Front Desk
-            </button>
-            <p className="text-center text-gray-600 text-[9px] font-bold uppercase tracking-widest mt-4">
-              Online booking coming soon. Call to secure your spot.
-            </p>
+            {registered ? (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-3xl p-8 text-center animate-in zoom-in-95 duration-500">
+                <CheckCircle className="text-green-500 mx-auto mb-4" size={48} />
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white mb-2">You're In!</h3>
+                <p className="text-gray-400 text-sm">Confirmation email sent to <strong>{formData.email}</strong>. See you there!</p>
+                <button onClick={() => setRegistered(false)} className="mt-6 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white underline underline-offset-4">Register someone else</button>
+              </div>
+            ) : showForm ? (
+              <form onSubmit={handleRegister} className="bg-black/50 border border-gray-800 rounded-3xl p-8 shadow-2xl animate-in slide-in-from-bottom-4">
+                 <h3 className="text-xs font-black uppercase tracking-[0.2em] mb-6 text-blue-500 flex items-center gap-2">
+                   Online Registration
+                 </h3>
+                 <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2">Full Name</label>
+                      <input 
+                        type="text" required 
+                        value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                        className="w-full bg-[#0a0a0a] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 transition-colors text-white" 
+                        placeholder="e.g. Sathsara Gamage" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-2">Email Address</label>
+                      <input 
+                        type="email" required 
+                        value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})}
+                        className="w-full bg-[#0a0a0a] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 transition-colors text-white" 
+                        placeholder="your@email.com" 
+                      />
+                    </div>
+                    {error && <p className="text-[10px] text-red-500 font-bold uppercase">{error}</p>}
+                    <div className="flex gap-4 pt-4">
+                       <button type="button" onClick={() => setShowForm(false)} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] transition-colors">Cancel</button>
+                       <button type="submit" disabled={submitting} className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all disabled:opacity-50">
+                         {submitting ? "Booking..." : "Confirm Spot"}
+                       </button>
+                    </div>
+                 </div>
+              </form>
+            ) : (
+              <>
+                <button 
+                  onClick={() => setShowForm(true)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 transition-all hover:shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:-translate-y-1 active:scale-95"
+                >
+                  <Users size={20} /> Register Online Now
+                </button>
+                <p className="text-center text-gray-600 text-[9px] font-bold uppercase tracking-widest mt-4">
+                  Instant confirmation via email. Secure your spot today.
+                </p>
+              </>
+            )}
           </div>
 
         </div>

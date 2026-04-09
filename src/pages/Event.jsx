@@ -6,6 +6,8 @@ import { Calendar, Plus, Edit2, Trash2, Image as ImageIcon, MapPin, Clock, Tag }
 
 const Event = () => {
   const [events, setEvents] = useState([]);
+  const [attendees, setAttendees] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '', type: '', location: '', description: '', image: '' });
   const [editEventId, setEditEventId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -58,6 +60,17 @@ const Event = () => {
       await axios.delete(`https://rc-fitness-backend.vercel.app/api/events/delete/${id}`, { headers: { 'auth-token': token } });
       fetchEvents();
     } catch (err) { console.error("Error deleting event:", err); }
+  };
+
+  const fetchAttendees = async (eventId) => {
+    setLoadingAttendees(true);
+    setSelectedEvent(events.find(e => e._id === eventId));
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await axios.get(`https://rc-fitness-backend.vercel.app/api/events/registrations/${eventId}`, { headers: { 'auth-token': token } });
+      setAttendees(res.data);
+    } catch (err) { console.error(err); }
+    finally { setLoadingAttendees(false); }
   };
 
   return (
@@ -194,6 +207,13 @@ const Event = () => {
                    </div>
                  </div>
                  
+                 <button 
+                    onClick={() => fetchAttendees(ev._id)}
+                    className="w-full mb-4 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-900/30 rounded-xl py-3 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                  >
+                    <Users size={14} /> View Attendees
+                  </button>
+
                  <div className="mt-auto flex gap-2 pt-4 border-t border-gray-900">
                    <button onClick={() => { setEditEventId(ev._id); setNewEvent({ title: ev.title, date: ev.date, time: ev.time, type: ev.type, location: ev.location, description: ev.description || '', image: ev.image }); setIsFormVisible(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
                      <Edit2 size={14} /> Edit
