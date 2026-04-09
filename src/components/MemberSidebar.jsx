@@ -12,7 +12,6 @@ const MemberSidebar = () => {
     { name: 'Workout Plans', icon: <Dumbbell size={20}/>, path: '/workout-plans' },
     { name: 'Diet Plans', icon: <Utensils size={20}/>, path: '/diet-plans' },
     { name: 'Progress', icon: <TrendingUp size={20}/>, path: '/progress' },
-    { name: 'Classes', icon: <CalendarDays size={20}/>, path: '/classes' },
     { name: 'Community', icon: <Users size={20}/>, path: '/reviews' },
     { name: 'Store', icon: <Store size={20}/>, path: '/store' },
     { name: 'Profile', icon: <User size={20}/>, path: '/profile' },
