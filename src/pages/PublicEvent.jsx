@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Search, Calendar, Filter, MapPin, Clock } from 'lucide-react';
 import PublicNavbar from '../components/PublicNavbar';
 
+
 const PublicEvent = () => {
   const [events, setEvents] = useState([]);
   const [search, setSearch] = useState('');
@@ -20,7 +21,7 @@ const PublicEvent = () => {
   }, []);
 
   const categories = ['All', 'Class', 'Workshop', 'Competition', 'Social'];
-  
+
   const filteredEvents = events.filter(e => {
     const matchesSearch = e.title.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = category === 'All' || e.type === category;
@@ -37,13 +38,13 @@ const PublicEvent = () => {
             <h2 className="text-xl font-black uppercase italic tracking-tighter mb-6 flex items-center gap-2">
               <Filter size={18} className="text-blue-500" /> Filters
             </h2>
-            
+
             <div className="mb-8">
               <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3 block">Search Event</label>
               <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="Find classes..." 
+                <input
+                  type="text"
+                  placeholder="Find classes..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 pl-10 text-sm focus:outline-none focus:border-blue-600 transition-colors"
@@ -56,12 +57,11 @@ const PublicEvent = () => {
               <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3 block">Categories</label>
               <div className="flex flex-col gap-2">
                 {categories.map(cat => (
-                  <button 
+                  <button
                     key={cat}
                     onClick={() => setCategory(cat)}
-                    className={`text-left px-4 py-3 rounded-xl text-sm font-bold tracking-wide transition-all ${
-                      category === cat ? 'bg-blue-600/20 text-blue-400 border border-blue-900/50' : 'text-gray-400 hover:bg-gray-900 border border-transparent hover:text-white'
-                    }`}
+                    className={`text-left px-4 py-3 rounded-xl text-sm font-bold tracking-wide transition-all ${category === cat ? 'bg-blue-600/20 text-blue-400 border border-blue-900/50' : 'text-gray-400 hover:bg-gray-900 border border-transparent hover:text-white'
+                      }`}
                   >
                     {cat}
                   </button>
@@ -103,10 +103,10 @@ const PublicEvent = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="p-6 flex-1 flex flex-col">
                     <h3 className="font-black text-2xl uppercase tracking-tight italic mb-4 line-clamp-2">{event.title}</h3>
-                    
+
                     <div className="space-y-3 mt-auto text-gray-400 text-xs font-bold tracking-widest uppercase">
                       <div className="flex items-center gap-3">
                         <Calendar size={16} className="text-blue-500" />

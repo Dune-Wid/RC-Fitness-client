@@ -1,24 +1,109 @@
 import { useState } from 'react';
-import { X, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle } from 'lucide-react';
+import { X, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle, Tag, CreditCard, Banknote } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import axios from 'axios';
 
 const CartSidebar = () => {
   const { cartItems, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart, clearCart } = useCart();
   const [isCheckout, setIsCheckout] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', address: '', paymentMethod: 'Cash' });
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [promoError, setPromoError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isCartOpen) return null;
 
-  const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-  const handleCheckoutSubmit = (e) => {
+  const discountAmount = appliedPromo ? (totalAmount * (appliedPromo.discount / 100)) : 0;
+  const finalAmount = totalAmount - discountAmount;
+
+  const handleApplyPromo = async () => {
+    if (!promoCode) return;
+    try {
+      const res = await axios.post('https://rc-fitness-backend.vercel.app/api/shop/promotions/validate', { code: promoCode });
+      setAppliedPromo(res.data);
+      setPromoError('');
+    } catch (err) {
+      setPromoError('Invalid or expired code');
+      setAppliedPromo(null);
+    }
+  };
+
+  const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
-    // Simulate API call for checkout
-    setTimeout(() => {
-      setOrderComplete(true);
-      clearCart();
-    }, 1000);
+    setIsSubmitting(true);
+    
+    const orderData = {
+      userName: formData.name,
+      userEmail: formData.email,
+      products: cartItems.map(item => ({
+        productId: item._id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      })),
+      totalAmount: finalAmount,
+      promoCode: appliedPromo ? appliedPromo.code : '',
+      discountAmount,
+      paymentMethod: formData.paymentMethod,
+      billingDetails: {
+        phone: formData.phone,
+        address: formData.address
+      }
+    };
+
+    try {
+      const res = await axios.post('https://rc-fitness-backend.vercel.app/api/shop/checkout', orderData);
+      
+      if (formData.paymentMethod === 'Card' && res.data.payhereHash) {
+          const { order, payhereHash, merchantId } = res.data;
+          
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = 'https://sandbox.payhere.lk/pay/checkout';
+          
+          const params = {
+              merchant_id: merchantId,
+              return_url: window.location.href, 
+              cancel_url: window.location.href,
+              notify_url: 'https://rc-fitness-backend.vercel.app/api/shop/payhere/notify',
+              first_name: formData.name.split(' ')[0],
+              last_name: formData.name.split(' ').slice(1).join(' ') || formData.name,
+              email: formData.email,
+              phone: formData.phone || '0000000000',
+              address: formData.address,
+              city: 'Colombo',
+              country: 'Sri Lanka',
+              order_id: order._id,
+              items: 'RC Fitness Order',
+              currency: 'LKR',
+              amount: finalAmount.toFixed(2),
+              hash: payhereHash
+          };
+
+          for (const key in params) {
+              const hiddenField = document.createElement('input');
+              hiddenField.type = 'hidden';
+              hiddenField.name = key;
+              hiddenField.value = params[key];
+              form.appendChild(hiddenField);
+          }
+
+          document.body.appendChild(form);
+          form.submit();
+      } else {
+          setOrderComplete(true);
+          clearCart();
+      }
+    } catch (err) {
+      console.error("Checkout failed:", err);
+      alert("Something went wrong during checkout. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const closeSidebar = () => {
@@ -26,7 +111,9 @@ const CartSidebar = () => {
     setTimeout(() => {
       setIsCheckout(false);
       setOrderComplete(false);
-      setFormData({ name: '', email: '', phone: '' });
+      setFormData({ name: '', email: '', phone: '', address: '', paymentMethod: 'Cash' });
+      setAppliedPromo(null);
+      setPromoCode('');
     }, 500);
   };
 
@@ -66,8 +153,40 @@ const CartSidebar = () => {
                 <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white" placeholder="john@example.com" />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Phone Number</label>
-                <input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white" placeholder="+94 77 XXXXXXX" />
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Delivery Address</label>
+                <textarea required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white h-20 resize-none" placeholder="Enter your full address..." />
+              </div>
+              
+              <div className="pt-4">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4">Payment Method</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
+                    type="button" 
+                    onClick={() => setFormData({...formData, paymentMethod: 'Cash'})}
+                    className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === 'Cash' ? 'bg-purple-600/10 border-purple-600 text-purple-400' : 'bg-[#111] border-gray-800 text-gray-500'}`}
+                  >
+                    <Banknote size={20} />
+                    <span className="text-[10px] font-bold uppercase">Cash on Pickup</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setFormData({...formData, paymentMethod: 'Card'})}
+                    className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === 'Card' ? 'bg-purple-600/10 border-purple-600 text-purple-400' : 'bg-[#111] border-gray-800 text-gray-500'}`}
+                  >
+                    <CreditCard size={20} />
+                    <span className="text-[10px] font-bold uppercase">Card Payment</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Promo Code</label>
+                <div className="flex gap-2">
+                  <input type="text" value={promoCode} onChange={e => setPromoCode(e.target.value)} className="flex-1 bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white uppercase tracking-widest" placeholder="ENTER CODE" />
+                  <button type="button" onClick={handleApplyPromo} className="px-6 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Apply</button>
+                </div>
+                {promoError && <p className="text-red-500 text-[10px] mt-2 font-bold uppercase tracking-widest">{promoError}</p>}
+                {appliedPromo && <p className="text-green-500 text-[10px] mt-2 font-bold uppercase tracking-widest">Applied: {appliedPromo.discount}% OFF!</p>}
               </div>
             </form>
           </div>
@@ -118,16 +237,22 @@ const CartSidebar = () => {
                   <span>Subtotal</span>
                   <span className="text-white">LKR {totalAmount.toLocaleString()}</span>
                 </div>
+                {appliedPromo && (
+                   <div className="flex justify-between text-sm font-bold uppercase tracking-widest text-green-500">
+                     <span>Discount ({appliedPromo.discount}%)</span>
+                     <span>- LKR {discountAmount.toLocaleString()}</span>
+                   </div>
+                )}
                 <div className="flex justify-between text-lg font-black uppercase tracking-tight text-white mb-4">
                   <span>Total</span>
-                  <span className="text-purple-500">LKR {totalAmount.toLocaleString()}</span>
+                  <span className="text-purple-500">LKR {finalAmount.toLocaleString()}</span>
                 </div>
                 <div className="flex gap-4">
                   <button onClick={() => setIsCheckout(false)} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] transition-colors">
                     Back
                   </button>
-                  <button type="submit" form="checkout-form" className="flex-[2] bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all">
-                    Confirm Order <CheckCircle size={16} />
+                  <button type="submit" form="checkout-form" disabled={isSubmitting} className="flex-[2] bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all">
+                    {isSubmitting ? 'Processing...' : <>Confirm Order <CheckCircle size={16} /></>}
                   </button>
                 </div>
               </div>

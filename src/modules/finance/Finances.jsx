@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../../components/Sidebar';
+
 import ReceiptModal from '../../components/ReceiptModal';
-import {  Plus, Trash2, Calendar, FileText, Edit2, TrendingUp, BarChart3,  Users, ShoppingBag, Banknote, TrendingDown ,Receipt} from 'lucide-react';
+import {  Plus, Trash2, Calendar, FileText, Edit2, TrendingUp, BarChart3,  Users, ShoppingBag, Banknote, TrendingDown ,Receipt, CheckCircle} from 'lucide-react';
 
 const Finances = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -12,17 +13,23 @@ const Finances = () => {
   const [staff, setStaff] = useState([]);
   const [products, setProducts] = useState([]);
   const [members, setMembers] = useState([]);
+  const [payroll, setPayroll] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
+  const [jobRoles, setJobRoles] = useState([]);
 
   // Forms for Plans and Payments
-  const [newPlan, setNewPlan] = useState({ name: '', price: '', duration: '' });
+  const [newPlan, setNewPlan] = useState({ name: '', price: '', duration: '', features: [] });
   const [newPayment, setNewPayment] = useState({ member: '', amount: '', date: new Date().toISOString().split('T')[0], status: 'Paid', duration: '', email: '', treadmillAccess: false, planName: '' });
+  const [newExpense, setNewExpense] = useState({ description: '', amount: '', category: '', date: new Date().toISOString().split('T')[0] });
   
   // Edit states
   const [editPlanId, setEditPlanId] = useState(null);
   const [editPaymentId, setEditPaymentId] = useState(null);
   const [editStaffId, setEditStaffId] = useState(null);
   const [editSalaryValue, setEditSalaryValue] = useState('');
+  const [editJobRoleId, setEditJobRoleId] = useState(null);
+  const [editJobRoleSalary, setEditJobRoleSalary] = useState('');
 
   // Receipt Modal
   const [selectedPayment, setSelectedPayment] = useState(null);
@@ -32,12 +39,15 @@ const Finances = () => {
       const token = localStorage.getItem('authToken');
       const config = { headers: { 'auth-token': token } };
       
-      const [plansRes, paymentsRes, staffRes, productsRes, membersRes] = await Promise.all([
+      const [plansRes, paymentsRes, staffRes, productsRes, membersRes, payrollRes, expensesRes, jobRolesRes] = await Promise.all([
         axios.get('https://rc-fitness-backend.vercel.app/api/finance/plans', config).catch(() => ({ data: [] })),
         axios.get('https://rc-fitness-backend.vercel.app/api/finance/payments', config).catch(() => ({ data: [] })),
         axios.get('https://rc-fitness-backend.vercel.app/api/user/staff-all', config).catch(() => ({ data: [] })),
         axios.get('https://rc-fitness-backend.vercel.app/api/shop/products', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/user/all', config).catch(() => ({ data: [] }))
+        axios.get('https://rc-fitness-backend.vercel.app/api/user/all', config).catch(() => ({ data: [] })),
+        axios.get('https://rc-fitness-backend.vercel.app/api/finance/payroll', config).catch(() => ({ data: [] })),
+        axios.get('https://rc-fitness-backend.vercel.app/api/finance/expenses', config).catch(() => ({ data: [] })),
+        axios.get('https://rc-fitness-backend.vercel.app/api/finance/job-roles', config).catch(() => ({ data: [] }))
       ]);
       
       setPlans(plansRes.data || []);
@@ -45,6 +55,9 @@ const Finances = () => {
       setStaff(staffRes.data || []);
       setProducts(productsRes.data || []);
       setMembers(membersRes.data || []);
+      setPayroll(payrollRes.data || []);
+      setExpenses(expensesRes.data || []);
+      setJobRoles(jobRolesRes.data || []);
     } catch (err) { console.error("Error fetching finance data:", err); }
   };
 
@@ -57,7 +70,12 @@ const Finances = () => {
   const memberPaymentsIncome = payments.filter(p => p.status === 'Paid').reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
 
   const totalIncome = memberPaymentsIncome + shopRevenue;
-  const totalOutgoing = staff.reduce((acc, s) => acc + (Number(s.salary) || 0), 0);
+  const staffSalaries = staff.reduce((acc, s) => acc + (Number(s.salary) || 0), 0);
+  const recordedExpenses = expenses.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+  const paidPayroll = payroll.filter(p => p.status === 'Paid').reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+  
+  const totalOutgoing = paidPayroll + recordedExpenses;
+  const netProfit = totalIncome - totalOutgoing;
 
   // --- PLANS HANDLERS ---
   const handleAddPlan = async (e) => {
@@ -72,12 +90,12 @@ const Finances = () => {
         const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/finance/plans/update/${editPlanId}`, submittedPlan, { headers: { 'auth-token': token } });
         setPlans(plans.map(p => (p._id || p.id) === editPlanId ? res.data : p));
         setEditPlanId(null);
-        setNewPlan({ name: '', price: '', duration: '' });
+        setNewPlan({ name: '', price: '', duration: '', features: [] });
       } catch (err) { console.error("Error updating DB:", err); }
     } else {
       const tempPlan = { ...submittedPlan, _id: Date.now() };
       setPlans(prev => [...prev, tempPlan]);
-      setNewPlan({ name: '', price: '', duration: '' });
+      setNewPlan({ name: '', price: '', duration: '', features: [] });
       try {
         const token = localStorage.getItem('authToken');
         await axios.post('https://rc-fitness-backend.vercel.app/api/finance/plans/add', submittedPlan, { headers: { 'auth-token': token } });
@@ -163,6 +181,58 @@ const Finances = () => {
     } catch (err) { console.error("Error updating Staff Salary:", err); }
   };
 
+  const handleUpdateJobRoleSalary = async (id) => {
+    if (!editJobRoleSalary) return;
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/finance/job-roles/update/${id}`, { baseSalary: Number(editJobRoleSalary) }, { headers: { 'auth-token': token } });
+      setJobRoles(jobRoles.map(r => r._id === id ? res.data : r));
+      setEditJobRoleId(null);
+      setEditJobRoleSalary('');
+    } catch (err) { console.error("Error updating Job Role:", err); }
+  };
+
+  const handleProcessPayroll = async (staffMember) => {
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const currentMonth = months[new Date().getMonth()];
+    const currentYear = new Date().getFullYear();
+
+    const payrollData = {
+      staffId: staffMember._id,
+      staffName: staffMember.fullName,
+      month: currentMonth,
+      year: currentYear,
+      amount: staffMember.salary || 0,
+      status: 'Paid',
+      datePaid: new Date().toISOString()
+    };
+
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.post('https://rc-fitness-backend.vercel.app/api/finance/payroll/add', payrollData, { headers: { 'auth-token': token } });
+      fetchFinanceData();
+      alert(`Salary for ${staffMember.fullName} for ${currentMonth} ${currentYear} recorded successfully!`);
+    } catch (err) { console.error("Error recording payroll:", err); }
+  };
+
+  const handleAddExpense = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.post('https://rc-fitness-backend.vercel.app/api/finance/expenses/add', newExpense, { headers: { 'auth-token': token } });
+      fetchFinanceData();
+      setNewExpense({ description: '', amount: '', category: '', date: new Date().toISOString().split('T')[0] });
+    } catch (err) { console.error("Error adding expense:", err); }
+  };
+
+  const handleDeleteExpense = async (id) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.delete(`https://rc-fitness-backend.vercel.app/api/finance/expenses/delete/${id}`, { headers: { 'auth-token': token } });
+      fetchFinanceData();
+    } catch (err) { console.error("Error deleting expense:", err); }
+  };
+
   const calculateRemainingDays = (paymentDate, durationText) => {
     if (!paymentDate || !durationText) return 0;
     const start = new Date(paymentDate);
@@ -208,38 +278,38 @@ const Finances = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="bg-[#111] border border-gray-900 rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><TrendingDown size={64}/></div>
-            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Outgoing Payments (Staff)</p>
+            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Total Expenses (Net Out)</p>
             <h2 className="text-4xl font-black italic tracking-tighter text-gray-300 z-10">LKR {totalOutgoing.toLocaleString()}</h2>
           </div>
           <div className="bg-[#111] border border-green-900/30 rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-2xl relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-green-500"><TrendingUp size={64}/></div>
-            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Total Income</p>
-            <h2 className="text-4xl font-black italic tracking-tighter text-green-500 z-10">LKR {totalIncome.toLocaleString()}</h2>
+            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Net Profit</p>
+            <h2 className={`text-4xl font-black italic tracking-tighter z-10 ${netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>LKR {netProfit.toLocaleString()}</h2>
           </div>
           <div className="bg-[#111] border border-purple-900/30 rounded-3xl p-8 flex flex-col justify-center items-center text-center shadow-2xl relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-purple-500"><ShoppingBag size={64}/></div>
-            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Shop Revenue</p>
-            <h2 className="text-4xl font-black italic tracking-tighter text-purple-500 z-10">LKR {shopRevenue.toLocaleString()}</h2>
+            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 z-10">Gross Income</p>
+            <h2 className="text-4xl font-black italic tracking-tighter text-purple-500 z-10">LKR {totalIncome.toLocaleString()}</h2>
           </div>
         </div>
 
         {/* Bottom Nav Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-          <button onClick={() => setActiveTab('plans')} className={`p-6 rounded-2xl border flex flex-col items-center justify-center gap-3 transition-all ${activeTab === 'plans' ? 'bg-red-600/10 border-red-600 text-red-500 shadow-[0_0_30px_rgba(220,38,38,0.15)]' : 'bg-[#111] border-gray-900 text-gray-400 hover:border-gray-600 hover:text-white'}`}>
-            <FileText size={28} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Membership Plans</span>
+          <button onClick={() => setActiveTab('plans')} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${activeTab === 'plans' ? 'bg-red-600/10 border-red-600 text-red-500 shadow-[0_0_30px_rgba(220,38,38,0.15)]' : 'bg-[#111] border-gray-900 text-gray-400 hover:border-gray-600 hover:text-white'}`}>
+            <FileText size={20} />
+            <span className="text-[9px] font-black uppercase tracking-widest">Plans</span>
           </button>
-          <button onClick={() => setActiveTab('salary')} className={`p-6 rounded-2xl border flex flex-col items-center justify-center gap-3 transition-all ${activeTab === 'salary' ? 'bg-blue-600/10 border-blue-600 text-blue-500 shadow-[0_0_30px_rgba(37,99,235,0.15)]' : 'bg-[#111] border-gray-900 text-gray-400 hover:border-gray-600 hover:text-white'}`}>
-            <Users size={28} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Staff Salary</span>
+          <button onClick={() => setActiveTab('salary')} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${activeTab === 'salary' ? 'bg-blue-600/10 border-blue-600 text-blue-500 shadow-[0_0_30px_rgba(37,99,235,0.15)]' : 'bg-[#111] border-gray-900 text-gray-400 hover:border-gray-600 hover:text-white'}`}>
+            <Users size={20} />
+            <span className="text-[9px] font-black uppercase tracking-widest">Payroll</span>
           </button>
-          <button onClick={() => setActiveTab('payments')} className={`p-6 rounded-2xl border flex flex-col items-center justify-center gap-3 transition-all ${activeTab === 'payments' ? 'bg-green-600/10 border-green-600 text-green-500 shadow-[0_0_30px_rgba(22,163,74,0.15)]' : 'bg-[#111] border-gray-900 text-gray-400 hover:border-gray-600 hover:text-white'}`}>
-            <Banknote size={28} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Member Payment</span>
+          <button onClick={() => setActiveTab('expense')} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${activeTab === 'expense' ? 'bg-orange-600/10 border-orange-600 text-orange-500 shadow-[0_0_30px_rgba(249,115,22,0.15)]' : 'bg-[#111] border-gray-900 text-gray-400 hover:border-gray-600 hover:text-white'}`}>
+             <TrendingDown size={20} />
+             <span className="text-[9px] font-black uppercase tracking-widest">Expenses</span>
           </button>
-          <button onClick={() => setActiveTab('shop')} className={`p-6 rounded-2xl border flex flex-col items-center justify-center gap-3 transition-all ${activeTab === 'shop' ? 'bg-purple-600/10 border-purple-600 text-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.15)]' : 'bg-[#111] border-gray-900 text-gray-400 hover:border-gray-600 hover:text-white'}`}>
-            <ShoppingBag size={28} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Shop Revenue</span>
+          <button onClick={() => setActiveTab('payments')} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${activeTab === 'payments' ? 'bg-green-600/10 border-green-600 text-green-500 shadow-[0_0_30px_rgba(22,163,74,0.15)]' : 'bg-[#111] border-gray-900 text-gray-400 hover:border-gray-600 hover:text-white'}`}>
+            <Banknote size={20} />
+            <span className="text-[9px] font-black uppercase tracking-widest">Payments</span>
           </button>
         </div>
 
@@ -261,12 +331,46 @@ const Finances = () => {
                   <input type="number" required placeholder="Price (LKR)" value={newPlan.price} onChange={(e) => setNewPlan({...newPlan, price: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors" />
                   <input type="text" required placeholder="Duration (e.g. 1 Month)" value={newPlan.duration} onChange={(e) => setNewPlan({...newPlan, duration: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors" />
                 </div>
+                {/* FEATURES EDITOR */}
+                <div className="mb-4">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2">Plan Features / Perks</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {(newPlan.features || []).map((f, i) => (
+                      <span key={i} className="flex items-center gap-1 bg-red-900/20 text-red-400 border border-red-900/30 px-3 py-1 rounded-full text-[10px] font-bold">
+                        {f}
+                        <button type="button" onClick={() => setNewPlan({...newPlan, features: newPlan.features.filter((_, idx) => idx !== i)})} className="text-red-700 hover:text-red-400 ml-1 font-black">×</button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      id="feature-input"
+                      type="text"
+                      placeholder="Add a feature (e.g. Free parking)"
+                      className="flex-1 bg-[#080808] border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-600 transition-colors"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = e.target.value.trim();
+                          if (val) { setNewPlan({...newPlan, features: [...(newPlan.features || []), val]}); e.target.value = ''; }
+                        }
+                      }}
+                    />
+                    <button type="button" onClick={() => {
+                      const inp = document.getElementById('feature-input');
+                      if (inp && inp.value.trim()) { setNewPlan({...newPlan, features: [...(newPlan.features || []), inp.value.trim()]}); inp.value = ''; }
+                    }} className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                      + Add
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-gray-700 mt-1 uppercase tracking-widest">Press Enter or click + Add to add a feature</p>
+                </div>
                 <div className="flex gap-4">
                   <button type="submit" className="flex-1 bg-red-600 hover:bg-red-700 text-white font-black uppercase text-xs tracking-widest py-3 rounded-xl transition-all flex items-center justify-center gap-2">
                     {editPlanId ? <><Edit2 size={16} /> Update Plan</> : <><Plus size={16} /> Add Plan</>}
                   </button>
                   {editPlanId && (
-                    <button type="button" onClick={() => { setEditPlanId(null); setNewPlan({ name: '', price: '', duration: '' }); }} className="bg-gray-800 hover:bg-gray-700 text-white font-black uppercase text-xs tracking-widest px-6 py-3 rounded-xl transition-all">Cancel</button>
+                    <button type="button" onClick={() => { setEditPlanId(null); setNewPlan({ name: '', price: '', duration: '', features: [] }); }} className="bg-gray-800 hover:bg-gray-700 text-white font-black uppercase text-xs tracking-widest px-6 py-3 rounded-xl transition-all">Cancel</button>
                   )}
                 </div>
               </form>
@@ -279,7 +383,7 @@ const Finances = () => {
                       <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">{plan.duration} &bull; <span className="text-green-500">LKR {plan.price}</span></p>
                     </div>
                     <div className="flex gap-2">
-                      <button type="button" onClick={() => { setEditPlanId(plan._id || plan.id); setNewPlan({ name: plan.name, price: plan.price, duration: plan.duration }); }} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 transition-colors">
+                      <button type="button" onClick={() => { setEditPlanId(plan._id || plan.id); setNewPlan({ name: plan.name, price: plan.price, duration: plan.duration, features: plan.features || [] }); }} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 transition-colors">
                         <Edit2 size={18} />
                       </button>
                       <button type="button" onClick={() => handleDeletePlan(plan._id || plan.id)} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors">
@@ -458,50 +562,160 @@ const Finances = () => {
           {/* STAFF SALARY (Fetched from Users) */}
           {activeTab === 'salary' && (
             <section className="bg-[#111] border border-gray-900 rounded-3xl p-6 lg:p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4">
-              <div className="flex items-center justify-between mb-6 border-b border-gray-900 pb-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b border-gray-900 pb-4 gap-4">
                 <div className="flex items-center gap-3">
                   <Users className="text-blue-500" size={24} />
-                  <h2 className="text-2xl font-black uppercase italic tracking-wider">Staff Payroll</h2>
+                  <h2 className="text-2xl font-black uppercase italic tracking-wider">Payroll Management</h2>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {staff.map(s => (
-                  <div key={s._id} className="flex flex-col md:flex-row md:items-center justify-between bg-black p-5 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors gap-4">
-                     <div>
-                       <div className="flex items-center gap-3">
-                         <h4 className="font-bold text-lg">{s.fullName}</h4>
-                         <span className="px-2 py-0.5 rounded-full border bg-blue-900/20 text-blue-500 border-blue-900/30 text-[9px] font-black uppercase tracking-widest">
-                           {s.shift || 'Staff'}
-                         </span>
-                       </div>
-                       <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mt-1">{s.email}</p>
-                     </div>
-
-                     <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t border-gray-800 md:border-t-0">
-                       <div className="flex flex-col items-end px-4 border-l border-gray-800">
-                         <span className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">Total Salary</span>
-                         {editStaffId === s._id ? (
-                           <div className="flex items-center gap-2">
-                             <input type="number" value={editSalaryValue} onChange={(e) => setEditSalaryValue(e.target.value)} className="bg-[#080808] border border-gray-800 rounded-xl px-2 py-1 text-sm focus:outline-none focus:border-blue-600 w-24 text-blue-500 font-bold" />
-                             <button onClick={() => handleUpdateSalary(s._id)} className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1.5 rounded-lg font-bold">Save</button>
-                             <button onClick={() => setEditStaffId(null)} className="bg-gray-800 text-gray-400 text-[10px] px-3 py-1.5 rounded-lg font-bold">Cancel</button>
-                           </div>
+              {/* Job Roles Management */}
+              <div className="mb-8 bg-black p-5 rounded-2xl border border-gray-800">
+                 <h3 className="text-[10px] font-black uppercase text-gray-500 mb-4 tracking-widest flex items-center gap-2"><Edit2 size={12}/> Configure Base Salaries</h3>
+                 <div className="flex flex-wrap gap-4">
+                   {jobRoles.map(r => (
+                     <div key={r._id} className="flex-1 min-w-[200px] border border-gray-800 rounded-xl p-3 flex justify-between items-center bg-[#111]">
+                       <div>
+                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{r.roleName}</p>
+                         {editJobRoleId === r._id ? (
+                           <input type="number" value={editJobRoleSalary} onChange={e => setEditJobRoleSalary(e.target.value)} className="w-20 bg-black border border-blue-900 focus:border-blue-500 rounded p-1 text-sm text-blue-500 font-bold outline-none mt-1" />
                          ) : (
-                           <span className="text-blue-500 font-bold block text-lg">LKR {(s.salary || 0).toLocaleString()}</span>
+                           <p className="text-sm font-black text-blue-500">LKR {r.baseSalary.toLocaleString()}</p>
                          )}
                        </div>
-                       {!editStaffId && (
+                       {editJobRoleId === r._id ? (
                          <div className="flex gap-2">
-                           <button onClick={() => { setEditStaffId(s._id); setEditSalaryValue(s.salary || 0); }} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 transition-colors">
-                             <Edit2 size={18} />
-                           </button>
+                           <button onClick={() => handleUpdateJobRoleSalary(r._id)} className="bg-blue-600 hover:bg-blue-500 text-white p-1.5 rounded-md"><CheckCircle size={14}/></button>
+                           <button onClick={() => setEditJobRoleId(null)} className="bg-gray-800 hover:bg-gray-700 text-white p-1.5 rounded-md"><X size={14}/></button>
                          </div>
+                       ) : (
+                         <button onClick={() => { setEditJobRoleId(r._id); setEditJobRoleSalary(r.baseSalary); }} className="text-gray-500 hover:text-blue-500 p-2"><Edit2 size={14} /></button>
                        )}
                      </div>
-                  </div>
+                   ))}
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                {staff.map(s => {
+                  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                  const currentMonth = months[new Date().getMonth()];
+                  const currentYear = new Date().getFullYear();
+                  const isPaid = payroll.some(p => p.staffId === s._id && p.month === currentMonth && p.year === currentYear);
+
+                  return (
+                    <div key={s._id} className="flex flex-col md:flex-row md:items-center justify-between bg-black p-5 rounded-2xl border border-gray-800 hover:border-gray-700 transition-colors gap-4">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <h4 className="font-bold text-lg">{s.fullName}</h4>
+                          <span className="px-2 py-0.5 rounded-full border bg-blue-900/20 text-blue-500 border-blue-900/30 text-[9px] font-black uppercase tracking-widest">
+                            {s.jobRole || s.shift || 'Staff'}
+                          </span>
+                        </div>
+                        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mt-1">{s.email}</p>
+                      </div>
+
+                      <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t border-gray-800 md:border-t-0">
+                        <div className="flex flex-col items-end px-4 border-l border-gray-800">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">{currentMonth} Salary</span>
+                          {editStaffId === s._id ? (
+                            <div className="flex items-center gap-2">
+                              <input type="number" value={editSalaryValue} onChange={(e) => setEditSalaryValue(e.target.value)} className="bg-[#080808] border border-gray-800 rounded-xl px-2 py-1 text-sm focus:outline-none focus:border-blue-600 w-24 text-blue-500 font-bold" />
+                              <button onClick={() => handleUpdateSalary(s._id)} className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-3 py-1.5 rounded-lg font-bold transition-all active:scale-95">Save</button>
+                            </div>
+                          ) : (
+                            <span className="text-blue-500 font-bold block text-lg">LKR {(s.salary || 0).toLocaleString()}</span>
+                          )}
+                        </div>
+                        {!editStaffId && (
+                          <div className="flex gap-2">
+                            <button onClick={() => { setEditStaffId(s._id); setEditSalaryValue(s.salary || 0); }} className="p-3 bg-[#111] rounded-xl text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 transition-colors">
+                              <Edit2 size={18} />
+                            </button>
+                            {isPaid ? (
+                              <span className="flex items-center gap-2 px-4 py-3 bg-green-900/20 text-green-500 border border-green-900/30 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-default">
+                                <CheckCircle size={14}/> Paid
+                              </span>
+                            ) : (
+                              <button onClick={() => handleProcessPayroll(s)} className="px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-green-900/20">
+                                Pay Salary
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <div className="mt-12">
+                 <h3 className="text-[10px] font-black uppercase text-gray-600 mb-4 tracking-widest border-b border-gray-900 pb-4">Payment History</h3>
+                 <div className="space-y-3">
+                   {payroll.map(p => (
+                     <div key={p._id} className="flex items-center justify-between p-4 bg-black/40 border border-gray-900 rounded-xl text-xs">
+                       <div className="flex items-center gap-4">
+                         <div className="bg-green-900/10 p-2 rounded-lg text-green-500"><CheckCircle size={14}/></div>
+                         <div>
+                           <p className="font-bold">{p.staffName}</p>
+                           <p className="text-gray-500 text-[10px] uppercase">{p.month} {p.year}</p>
+                         </div>
+                       </div>
+                       <div className="text-right">
+                         <p className="font-black text-gray-300">LKR {p.amount.toLocaleString()}</p>
+                         <p className="text-[10px] text-gray-600 uppercase tracking-widest">{new Date(p.datePaid).toLocaleDateString()}</p>
+                       </div>
+                     </div>
+                   ))}
+                   {payroll.length === 0 && <p className="text-center text-gray-700 py-10 uppercase text-[10px] font-bold tracking-widest">No transaction history found</p>}
+                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* EXPENSES MANAGEMENT */}
+          {activeTab === 'expense' && (
+            <section className="bg-[#111] border border-gray-900 rounded-3xl p-6 lg:p-8 shadow-xl animate-in fade-in slide-in-from-bottom-4">
+              <div className="flex items-center gap-3 mb-6 border-b border-gray-900 pb-4">
+                <TrendingDown className="text-orange-500" size={24} />
+                <h2 className="text-2xl font-black uppercase italic tracking-wider">Gym Expenses</h2>
+              </div>
+
+              <form onSubmit={handleAddExpense} className="mb-8 bg-black p-4 rounded-2xl border border-gray-800">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  <input type="text" required placeholder="Description" value={newExpense.description} onChange={e => setNewExpense({...newExpense, description: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-600 transition-colors" />
+                  <input type="number" required placeholder="Amount (LKR)" value={newExpense.amount} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-600 transition-colors" />
+                  <select required value={newExpense.category} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-600 transition-colors text-gray-400">
+                    <option value="" disabled>Category</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Utility">Utility</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <input type="date" required value={newExpense.date} onChange={e => setNewExpense({...newExpense, date: e.target.value})} className="bg-[#080808] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-600 transition-colors text-gray-400" />
+                </div>
+                <button type="submit" className="w-full bg-orange-600 hover:bg-orange-700 text-white font-black uppercase text-xs tracking-widest py-3 rounded-xl transition-all shadow-lg shadow-orange-900/20 active:scale-95">
+                  Record Expense
+                </button>
+              </form>
+
+              <div className="space-y-3">
+                {expenses.map(exp => (
+                   <div key={exp._id} className="flex items-center justify-between p-4 bg-black border border-gray-800 rounded-2xl hover:border-gray-700 transition-colors">
+                     <div className="flex items-center gap-4">
+                       <div className="bg-orange-900/10 p-3 rounded-xl text-orange-500 font-bold text-xs">{exp.category[0]}</div>
+                       <div>
+                         <p className="font-bold">{exp.description}</p>
+                         <p className="text-[10px] text-gray-500 uppercase tracking-widest">{exp.category} &bull; {exp.date}</p>
+                       </div>
+                     </div>
+                     <div className="flex items-center gap-6">
+                        <span className="font-black text-red-500">- LKR {exp.amount.toLocaleString()}</span>
+                        <button onClick={() => handleDeleteExpense(exp._id)} className="p-2 text-gray-600 hover:text-red-500 transition-colors"><Trash2 size={16}/></button>
+                     </div>
+                   </div>
                 ))}
-                {staff.length === 0 && <p className="text-center text-gray-600 text-sm font-bold uppercase tracking-widest py-4">No staff members found.</p>}
               </div>
             </section>
           )}

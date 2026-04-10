@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
 import InventoryReportModal from '../components/InventoryReportModal';
-import { ShoppingBag, Plus, Edit2, Trash2, Image as ImageIcon, Tag, Package } from 'lucide-react';
+import { ShoppingBag, Plus, Edit2, Trash2, Image as ImageIcon, Tag, Package, CheckCircle } from 'lucide-react';
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
@@ -10,16 +10,27 @@ const Shop = () => {
   const [editProductId, setEditProductId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('inventory');
+  const [orders, setOrders] = useState([]);
+  const [promotions, setPromotions] = useState([]);
+  const [newPromo, setNewPromo] = useState({ code: '', discount: '', isActive: true });
 
-  const fetchProducts = async () => {
+  const fetchShopData = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get('https://rc-fitness-backend.vercel.app/api/shop/products', { headers: { 'auth-token': token } });
-      setProducts(res.data);
-    } catch (err) { console.error("Error fetching products:", err); }
+      const config = { headers: { 'auth-token': token } };
+      const [productsRes, ordersRes, promosRes] = await Promise.all([
+        axios.get('https://rc-fitness-backend.vercel.app/api/shop/products', config).catch(() => ({ data: [] })),
+        axios.get('https://rc-fitness-backend.vercel.app/api/shop/orders', config).catch(() => ({ data: [] })),
+        axios.get('https://rc-fitness-backend.vercel.app/api/shop/promotions', config).catch(() => ({ data: [] }))
+      ]);
+      setProducts(productsRes.data);
+      setOrders(ordersRes.data);
+      setPromotions(promosRes.data);
+    } catch (err) { console.error("Error fetching shop data:", err); }
   };
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => { fetchShopData(); }, []);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -50,11 +61,45 @@ const Shop = () => {
         setEditProductId(null);
       } else {
         await axios.post('https://rc-fitness-backend.vercel.app/api/shop/products/add', submittedProduct, { headers: { 'auth-token': token } });
-        fetchProducts();
+        fetchShopData();
       }
       setNewProduct({ name: '', category: '', price: '', stock: '', description: '', images: [] });
       setIsFormVisible(false);
     } catch (err) { console.error("Error saving product:", err); }
+  };
+
+  const handleUpdateOrderStatus = async (orderId, status) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.put(`https://rc-fitness-backend.vercel.app/api/shop/orders/${orderId}/status`, { status }, { headers: { 'auth-token': token } });
+      fetchShopData();
+    } catch (err) { console.error("Error updating order status:", err); }
+  };
+
+  const handleAddPromo = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.post('https://rc-fitness-backend.vercel.app/api/shop/promotions/add', newPromo, { headers: { 'auth-token': token } });
+      setNewPromo({ code: '', discount: '', isActive: true });
+      fetchShopData();
+    } catch (err) { console.error("Error adding promo:", err); }
+  };
+
+  const handleTogglePromo = async (id) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.put(`https://rc-fitness-backend.vercel.app/api/shop/promotions/toggle/${id}`, {}, { headers: { 'auth-token': token } });
+      fetchShopData();
+    } catch (err) { console.error("Error toggling promo:", err); }
+  };
+
+  const handleDeletePromo = async (id) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      await axios.delete(`https://rc-fitness-backend.vercel.app/api/shop/promotions/delete/${id}`, { headers: { 'auth-token': token } });
+      fetchShopData();
+    } catch (err) { console.error("Error deleting promo:", err); }
   };
 
   const handleDeleteProduct = async (id) => {
@@ -62,7 +107,7 @@ const Shop = () => {
     try {
       const token = localStorage.getItem('authToken');
       await axios.delete(`https://rc-fitness-backend.vercel.app/api/shop/products/delete/${id}`, { headers: { 'auth-token': token } });
-      fetchProducts();
+      fetchShopData();
     } catch (err) { console.error("Error deleting product:", err); }
   };
 
@@ -93,7 +138,16 @@ const Shop = () => {
           </div>
         </header>
 
-        {isFormVisible && (
+        {/* Tabs Navigation */}
+        <div className="flex gap-4 mb-8">
+          <button onClick={() => setActiveTab('inventory')} className={`px-6 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all ${activeTab === 'inventory' ? 'bg-purple-600 text-white shadow-lg' : 'bg-[#111] text-gray-500 hover:text-white'}`}>Inventory</button>
+          <button onClick={() => setActiveTab('orders')} className={`px-6 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all ${activeTab === 'orders' ? 'bg-purple-600 text-white shadow-lg' : 'bg-[#111] text-gray-500 hover:text-white'}`}>Orders ({orders.length})</button>
+          <button onClick={() => setActiveTab('promos')} className={`px-6 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all ${activeTab === 'promos' ? 'bg-purple-600 text-white shadow-lg' : 'bg-[#111] text-gray-500 hover:text-white'}`}>Promotions</button>
+        </div>
+
+        {activeTab === 'inventory' && (
+          <>
+            {isFormVisible && (
           <form onSubmit={handleSaveProduct} className="mb-12 bg-[#111] border border-gray-900 rounded-3xl p-6 lg:p-8 shadow-xl animate-in fade-in slide-in-from-top-4">
             <h3 className="text-[10px] font-black uppercase text-gray-500 mb-6 tracking-widest border-b border-gray-900 pb-4">
               {editProductId ? 'Edit Product Details' : 'Add New Product'}
@@ -200,13 +254,87 @@ const Shop = () => {
                </div>
              </div>
           ))}
-          {products.length === 0 && !isFormVisible && (
-            <div className="col-span-full py-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-900 rounded-3xl opacity-50">
-              <Package size={48} className="text-gray-700 mb-4" />
-              <p className="text-gray-500 uppercase tracking-widest font-bold text-sm">No products in inventory.</p>
-            </div>
-          )}
         </div>
+      </>
+    )}
+
+        {activeTab === 'orders' && (
+          <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+            {orders.map(order => (
+               <div key={order._id} className="bg-[#111] border border-gray-900 rounded-3xl p-6 hover:border-gray-700 transition-all">
+                 <div className="flex flex-col lg:flex-row justify-between gap-6">
+                   <div className="flex-1">
+                     <div className="flex items-center gap-3 mb-4">
+                       <h3 className="font-black text-xl italic uppercase tracking-tighter">{order.userName}</h3>
+                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${order.status === 'Paid' ? 'bg-green-600/20 text-green-500' : 'bg-yellow-600/20 text-yellow-500'}`}>{order.status}</span>
+                     </div>
+                     <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-4">{order.userEmail} &bull; {new Date(order.createdAt).toLocaleString()}</p>
+                     
+                     <div className="space-y-2 bg-black/40 rounded-2xl p-4 border border-gray-900">
+                       {order.products.map((p, i) => (
+                         <div key={i} className="flex justify-between text-xs font-bold uppercase tracking-wide">
+                            <span className="text-gray-400">{p.name} <span className="text-purple-500">x{p.quantity}</span></span>
+                            <span>LKR {(p.price * p.quantity).toLocaleString()}</span>
+                         </div>
+                       ))}
+                       <div className="border-t border-gray-800 pt-2 mt-2 flex justify-between font-black text-sm text-purple-500 uppercase italic">
+                         <span>Total Amount</span>
+                         <span>LKR {order.totalAmount.toLocaleString()}</span>
+                       </div>
+                     </div>
+                   </div>
+
+                   <div className="w-full lg:w-72 space-y-4 border-l border-gray-900 lg:pl-6">
+                     <div>
+                       <label className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 block">Shipping / Payment</label>
+                       <p className="text-[10px] text-gray-400 font-bold leading-relaxed">{order.billingDetails.address}</p>
+                       <p className="text-[10px] text-purple-500 font-bold mt-1 uppercase tracking-widest">{order.paymentMethod}</p>
+                     </div>
+                     <select 
+                       value={order.status} 
+                       onChange={(e) => handleUpdateOrderStatus(order._id, e.target.value)}
+                       className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-purple-600 transition-colors"
+                     >
+                       <option value="Pending">Pending</option>
+                       <option value="Paid">Mark as Paid</option>
+                       <option value="Shipped">Mark as Shipped</option>
+                       <option value="Delivered">Mark as Delivered</option>
+                       <option value="Cancelled">Cancel Order</option>
+                     </select>
+                   </div>
+                 </div>
+               </div>
+            ))}
+            {orders.length === 0 && <p className="text-center py-10 text-gray-600 font-bold uppercase tracking-widest text-[10px]">No orders found.</p>}
+          </section>
+        )}
+
+        {activeTab === 'promos' && (
+           <section className="animate-in fade-in slide-in-from-bottom-4">
+             <form onSubmit={handleAddPromo} className="mb-8 bg-[#111] border border-gray-900 rounded-3xl p-6 flex flex-col md:flex-row gap-4">
+                <input type="text" placeholder="Promo Code (e.g. GYM20)" value={newPromo.code} onChange={e => setNewPromo({...newPromo, code: e.target.value.toUpperCase()})} className="flex-1 bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors uppercase" required />
+                <input type="number" placeholder="Discount %" value={newPromo.discount} onChange={e => setNewPromo({...newPromo, discount: e.target.value})} className="md:w-32 bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors" required />
+                <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white font-black uppercase text-[10px] tracking-widest px-8 py-3 rounded-xl transition-all shadow-lg active:scale-95">Add Code</button>
+             </form>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               {promotions.map(promo => (
+                 <div key={promo._id} className="bg-[#111] border border-gray-900 rounded-3xl p-6 flex items-center justify-between group hover:border-purple-500/50 transition-all">
+                    <div>
+                      <h4 className="font-black text-xl italic uppercase tracking-tighter mb-1">{promo.code}</h4>
+                      <p className="text-purple-500 font-bold text-sm">{promo.discount}% OFF &bull; <span className={promo.isActive ? 'text-green-500' : 'text-red-500'}>{promo.isActive ? 'ACTIVE' : 'INACTIVE'}</span></p>
+                    </div>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => handleTogglePromo(promo._id)} className="p-3 bg-black rounded-xl text-gray-500 hover:text-blue-500 transition-colors"><Edit2 size={16}/></button>
+                      <button onClick={() => handleDeletePromo(promo._id)} className="p-3 bg-black rounded-xl text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16}/></button>
+                    </div>
+                 </div>
+               ))}
+               {promotions.length === 0 && <p className="col-span-full text-center py-10 text-gray-600 font-bold uppercase tracking-widest text-[10px]">No active promotions.</p>}
+             </div>
+           </section>
+        )}
+
 
         {showReportModal && (
           <InventoryReportModal 

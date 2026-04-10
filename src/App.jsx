@@ -22,6 +22,7 @@ import Equipment from './pages/Equipment';
 import Classes from './pages/Classes';
 import AdminClass from './pages/AdminClass';
 import MemberReviews from './pages/MemberReviews';
+import Membership from './pages/Membership';
 
 import { CartProvider } from './context/CartContext';
 import CartSidebar from './components/CartSidebar';
@@ -55,6 +56,7 @@ function App() {
           <Route path="/progress" element={<Progress />} />
           <Route path="/classes" element={<Classes />} />
           <Route path="/reviews" element={<MemberReviews />} />
+          <Route path="/membership" element={<Membership />} />
 
           {/* Admin Protected */}
           <Route path="/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />

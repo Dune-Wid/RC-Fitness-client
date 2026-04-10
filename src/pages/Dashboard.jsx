@@ -27,10 +27,10 @@ const Dashboard = () => {
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <StatCard title="Total Members" value={stats.totalMembers} trend="Total Enrolled" icon={<Users className="text-red-500"/>} />
-          <StatCard title="Active Members" value={stats.activeMembers} trend="Currently Active" icon={<Activity className="text-green-500"/>} />
-          <StatCard title="Total Staff" value={stats.totalStaff} trend="Trainers & Admin" icon={<UserCheck className="text-blue-500"/>} />
-          <StatCard title="Est. Revenue" value={`Rs. ${stats.revenue?.toLocaleString()}`} trend="Monthly Target" icon={<DollarSign className="text-yellow-500"/>} />
+          <StatCard title="Total Members" value={stats.totalMembers} trend="Total Enrolled" icon={<Users className="text-red-500" />} />
+          <StatCard title="Active Members" value={stats.activeMembers} trend="Currently Active" icon={<Activity className="text-green-500" />} />
+          <StatCard title="Total Staff" value={stats.totalStaff} trend="Trainers & Admin" icon={<UserCheck className="text-blue-500" />} />
+          <StatCard title="Est. Revenue" value={`Rs. ${stats.revenue?.toLocaleString()}`} trend="Monthly Target" icon={<DollarSign className="text-yellow-500" />} />
         </div>
       </main>
     </div>
