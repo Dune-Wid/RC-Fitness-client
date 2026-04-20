@@ -40,14 +40,14 @@ const Finances = () => {
       const config = { headers: { 'auth-token': token } };
       
       const [plansRes, paymentsRes, staffRes, productsRes, membersRes, payrollRes, expensesRes, jobRolesRes] = await Promise.all([
-        axios.get('https://rc-fitness-backend.vercel.app/api/finance/plans', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/finance/payments', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/user/staff-all', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/shop/products', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/user/all', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/finance/payroll', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/finance/expenses', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/finance/job-roles', config).catch(() => ({ data: [] }))
+        axios.get('http://localhost:5000/api/finance/plans', config).catch(() => ({ data: [] })),
+        axios.get('http://localhost:5000/api/finance/payments', config).catch(() => ({ data: [] })),
+        axios.get('http://localhost:5000/api/user/staff-all', config).catch(() => ({ data: [] })),
+        axios.get('http://localhost:5000/api/shop/products', config).catch(() => ({ data: [] })),
+        axios.get('http://localhost:5000/api/user/all', config).catch(() => ({ data: [] })),
+        axios.get('http://localhost:5000/api/finance/payroll', config).catch(() => ({ data: [] })),
+        axios.get('http://localhost:5000/api/finance/expenses', config).catch(() => ({ data: [] })),
+        axios.get('http://localhost:5000/api/finance/job-roles', config).catch(() => ({ data: [] }))
       ]);
       
       setPlans(plansRes.data || []);
@@ -87,7 +87,7 @@ const Finances = () => {
     if (editPlanId) {
       try {
         const token = localStorage.getItem('authToken');
-        const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/finance/plans/update/${editPlanId}`, submittedPlan, { headers: { 'auth-token': token } });
+        const res = await axios.put(`http://localhost:5000/api/finance/plans/update/${editPlanId}`, submittedPlan, { headers: { 'auth-token': token } });
         setPlans(plans.map(p => (p._id || p.id) === editPlanId ? res.data : p));
         setEditPlanId(null);
         setNewPlan({ name: '', price: '', duration: '', features: [] });
@@ -98,7 +98,7 @@ const Finances = () => {
       setNewPlan({ name: '', price: '', duration: '', features: [] });
       try {
         const token = localStorage.getItem('authToken');
-        await axios.post('https://rc-fitness-backend.vercel.app/api/finance/plans/add', submittedPlan, { headers: { 'auth-token': token } });
+        await axios.post('http://localhost:5000/api/finance/plans/add', submittedPlan, { headers: { 'auth-token': token } });
         fetchFinanceData();
       } catch (err) { console.error("Error adding to DB:", err); }
     }
@@ -107,7 +107,7 @@ const Finances = () => {
     setPlans(prev => prev.filter(p => (p._id || p.id) !== id));
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/finance/plans/delete/${id}`, { headers: { 'auth-token': token } });
+      await axios.delete(`http://localhost:5000/api/finance/plans/delete/${id}`, { headers: { 'auth-token': token } });
       fetchFinanceData();
     } catch (err) { console.error("Error deleting from DB:", err); }
   };
@@ -128,7 +128,7 @@ const Finances = () => {
     if (editPaymentId) {
       try {
         const token = localStorage.getItem('authToken');
-        const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/finance/payments/update/${editPaymentId}`, submittedPayment, { headers: { 'auth-token': token } });
+        const res = await axios.put(`http://localhost:5000/api/finance/payments/update/${editPaymentId}`, submittedPayment, { headers: { 'auth-token': token } });
         setPayments(payments.map(p => (p._id || p.id) === editPaymentId ? res.data : p));
         setEditPaymentId(null);
         setNewPayment({ member: '', amount: '', date: new Date().toISOString().split('T')[0], status: 'Paid', duration: '', email: '', treadmillAccess: false, planName: '' });
@@ -139,12 +139,12 @@ const Finances = () => {
       setNewPayment({ member: '', amount: '', date: new Date().toISOString().split('T')[0], status: 'Paid', duration: '', email: '', treadmillAccess: false, planName: '' });
       try {
         const token = localStorage.getItem('authToken');
-        const res = await axios.post('https://rc-fitness-backend.vercel.app/api/finance/payments/add', submittedPayment, { headers: { 'auth-token': token } });
+        const res = await axios.post('http://localhost:5000/api/finance/payments/add', submittedPayment, { headers: { 'auth-token': token } });
         fetchFinanceData();
         
         const memberUser = members.find(m => m.fullName.toLowerCase() === newPayment.member.toLowerCase());
         if (memberUser && newPayment.planName) {
-           await axios.put(`https://rc-fitness-backend.vercel.app/api/user/update/${memberUser._id}`, {
+           await axios.put(`http://localhost:5000/api/user/update/${memberUser._id}`, {
              membershipType: newPayment.planName,
              treadmillAccess: newPayment.treadmillAccess
            }, { headers: { 'auth-token': token } }).catch(e => console.error(e));
@@ -164,7 +164,7 @@ const Finances = () => {
     setPayments(prev => prev.filter(p => (p._id || p.id) !== id));
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/finance/payments/delete/${id}`, { headers: { 'auth-token': token } });
+      await axios.delete(`http://localhost:5000/api/finance/payments/delete/${id}`, { headers: { 'auth-token': token } });
       fetchFinanceData();
     } catch (err) { console.error("Error deleting from DB:", err); }
   };
@@ -174,7 +174,7 @@ const Finances = () => {
     if (!editSalaryValue) return;
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/user/update/${id}`, { salary: Number(editSalaryValue) }, { headers: { 'auth-token': token } });
+      const res = await axios.put(`http://localhost:5000/api/user/update/${id}`, { salary: Number(editSalaryValue) }, { headers: { 'auth-token': token } });
       setStaff(staff.map(s => s._id === id ? res.data : s));
       setEditStaffId(null);
       setEditSalaryValue('');
@@ -185,7 +185,7 @@ const Finances = () => {
     if (!editJobRoleSalary) return;
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/finance/job-roles/update/${id}`, { baseSalary: Number(editJobRoleSalary) }, { headers: { 'auth-token': token } });
+      const res = await axios.put(`http://localhost:5000/api/finance/job-roles/update/${id}`, { baseSalary: Number(editJobRoleSalary) }, { headers: { 'auth-token': token } });
       setJobRoles(jobRoles.map(r => r._id === id ? res.data : r));
       setEditJobRoleId(null);
       setEditJobRoleSalary('');
@@ -209,7 +209,7 @@ const Finances = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/finance/payroll/add', payrollData, { headers: { 'auth-token': token } });
+      await axios.post('http://localhost:5000/api/finance/payroll/add', payrollData, { headers: { 'auth-token': token } });
       fetchFinanceData();
       alert(`Salary for ${staffMember.fullName} for ${currentMonth} ${currentYear} recorded successfully!`);
     } catch (err) { console.error("Error recording payroll:", err); }
@@ -219,7 +219,7 @@ const Finances = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/finance/expenses/add', newExpense, { headers: { 'auth-token': token } });
+      await axios.post('http://localhost:5000/api/finance/expenses/add', newExpense, { headers: { 'auth-token': token } });
       fetchFinanceData();
       setNewExpense({ description: '', amount: '', category: '', date: new Date().toISOString().split('T')[0] });
     } catch (err) { console.error("Error adding expense:", err); }
@@ -228,7 +228,7 @@ const Finances = () => {
   const handleDeleteExpense = async (id) => {
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/finance/expenses/delete/${id}`, { headers: { 'auth-token': token } });
+      await axios.delete(`http://localhost:5000/api/finance/expenses/delete/${id}`, { headers: { 'auth-token': token } });
       fetchFinanceData();
     } catch (err) { console.error("Error deleting expense:", err); }
   };

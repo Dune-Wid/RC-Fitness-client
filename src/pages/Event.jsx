@@ -26,8 +26,8 @@ const Event = () => {
       const token = localStorage.getItem('authToken');
       const config = { headers: { 'auth-token': token } };
       const [eventsRes, annRes] = await Promise.all([
-        axios.get('https://rc-fitness-backend.vercel.app/api/events'),
-        axios.get('https://rc-fitness-backend.vercel.app/api/events/announcements/all')
+        axios.get('http://localhost:5000/api/events'),
+        axios.get('http://localhost:5000/api/events/announcements/all')
       ]);
       setEvents(eventsRes.data);
       setAnnouncements(annRes.data);
@@ -59,12 +59,12 @@ const Event = () => {
       const token = localStorage.getItem('authToken');
       const config = { headers: { 'auth-token': token } };
       if (editEventId) {
-        const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/events/update/${editEventId}`, newEvent, config);
+        const res = await axios.put(`http://localhost:5000/api/events/update/${editEventId}`, newEvent, config);
         setEvents(events.map(ev => ev._id === editEventId ? res.data : ev));
         setEditEventId(null);
         showNotification('Event updated successfully');
       } else {
-        await axios.post('https://rc-fitness-backend.vercel.app/api/events/add', newEvent, config);
+        await axios.post('http://localhost:5000/api/events/add', newEvent, config);
         fetchEventData();
         showNotification('Event scheduled successfully');
       }
@@ -83,7 +83,7 @@ const Event = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/events/delete/${id}`, { headers: { 'auth-token': token } });
+      await axios.delete(`http://localhost:5000/api/events/delete/${id}`, { headers: { 'auth-token': token } });
       showNotification('Event deleted successfully');
       fetchEventData();
     } catch (err) { 
@@ -98,7 +98,7 @@ const Event = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/events/announcements/add', newAnnouncement, { headers: { 'auth-token': token } });
+      await axios.post('http://localhost:5000/api/events/announcements/add', newAnnouncement, { headers: { 'auth-token': token } });
       setNewAnnouncement({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'General' });
       fetchEventData();
       showNotification('News published successfully');
@@ -109,7 +109,7 @@ const Event = () => {
     if(!window.confirm("Delete this announcement?")) return;
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/events/announcements/delete/${id}`, { headers: { 'auth-token': token } });
+      await axios.delete(`http://localhost:5000/api/events/announcements/delete/${id}`, { headers: { 'auth-token': token } });
       fetchEventData();
       showNotification('Announcement removed');
     } catch (err) { console.error("Error deleting announcement:", err); }

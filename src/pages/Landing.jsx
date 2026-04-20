@@ -10,7 +10,7 @@ const Landing = () => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await axios.get('https://rc-fitness-backend.vercel.app/api/events/announcements/all');
+        const res = await axios.get('http://localhost:5000/api/events/announcements/all');
         setNews(res.data.slice(0, 3)); // Show only latest 3
       } catch (err) { console.error("Error fetching news:", err); }
     };

@@ -23,7 +23,7 @@ const CartSidebar = () => {
   const handleApplyPromo = async () => {
     if (!promoCode) return;
     try {
-      const res = await axios.post('https://rc-fitness-backend.vercel.app/api/shop/promotions/validate', { code: promoCode });
+      const res = await axios.post('http://localhost:5000/api/shop/promotions/validate', { code: promoCode });
       setAppliedPromo(res.data);
       setPromoError('');
     } catch (err) {
@@ -56,7 +56,7 @@ const CartSidebar = () => {
     };
 
     try {
-      const res = await axios.post('https://rc-fitness-backend.vercel.app/api/shop/checkout', orderData);
+      const res = await axios.post('http://localhost:5000/api/shop/checkout', orderData);
       
       if (formData.paymentMethod === 'Card' && res.data.payhereHash) {
           const { order, payhereHash, merchantId } = res.data;
@@ -69,7 +69,7 @@ const CartSidebar = () => {
               merchant_id: merchantId,
               return_url: window.location.href, 
               cancel_url: window.location.href,
-              notify_url: 'https://rc-fitness-backend.vercel.app/api/shop/payhere/notify',
+              notify_url: 'http://localhost:5000/api/shop/payhere/notify',
               first_name: formData.name.split(' ')[0],
               last_name: formData.name.split(' ').slice(1).join(' ') || formData.name,
               email: formData.email,

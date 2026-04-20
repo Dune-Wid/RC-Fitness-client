@@ -33,7 +33,7 @@ const AdminClass = () => {
   const fetchBookings = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const { data } = await axios.get('https://rc-fitness-backend.vercel.app/api/classes/bookings', {
+      const { data } = await axios.get('http://localhost:5000/api/classes/bookings', {
         headers: { 'auth-token': token }
       });
       setBookings(data);
@@ -45,7 +45,7 @@ const AdminClass = () => {
   const fetchClasses = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const { data } = await axios.get('https://rc-fitness-backend.vercel.app/api/classes', {
+      const { data } = await axios.get('http://localhost:5000/api/classes', {
         headers: { 'auth-token': token }
       });
       setClasses(data);
@@ -82,12 +82,12 @@ const AdminClass = () => {
     try {
       const token = localStorage.getItem('authToken');
       if (editingId) {
-        await axios.put(`https://rc-fitness-backend.vercel.app/api/classes/${editingId}`, formData, {
+        await axios.put(`http://localhost:5000/api/classes/${editingId}`, formData, {
           headers: { 'auth-token': token }
         });
         showNotification('Class updated successfully');
       } else {
-        await axios.post('https://rc-fitness-backend.vercel.app/api/classes', formData, {
+        await axios.post('http://localhost:5000/api/classes', formData, {
           headers: { 'auth-token': token }
         });
         showNotification('Class added successfully');
@@ -107,7 +107,7 @@ const AdminClass = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/classes/${id}`, {
+      await axios.delete(`http://localhost:5000/api/classes/${id}`, {
         headers: { 'auth-token': token }
       });
       showNotification('Class deleted successfully');

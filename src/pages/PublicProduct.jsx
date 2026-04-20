@@ -13,7 +13,7 @@ const PublicProduct = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await axios.get(`https://rc-fitness-backend.vercel.app/api/shop/products/${id}`);
+        const res = await axios.get(`http://localhost:5000/api/shop/products/${id}`);
         setProduct(res.data);
       } catch (err) { console.error("Error fetching product:", err); } finally {
         setLoading(false);

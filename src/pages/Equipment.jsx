@@ -24,7 +24,7 @@ const Equipment = () => {
   const fetchEquipment = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const { data } = await axios.get('https://rc-fitness-backend.vercel.app/api/equipment', {
+      const { data } = await axios.get('http://localhost:5000/api/equipment', {
         headers: { 'auth-token': token }
       });
       setEquipmentList(data);
@@ -38,7 +38,7 @@ const Equipment = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.put(`https://rc-fitness-backend.vercel.app/api/equipment/${eq._id}`, { status: newStatus }, {
+      await axios.put(`http://localhost:5000/api/equipment/${eq._id}`, { status: newStatus }, {
         headers: { 'auth-token': token }
       });
       showNotification(`Equipment marked as ${newStatus.toLowerCase()}`);
@@ -56,7 +56,7 @@ const Equipment = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/equipment/${id}`, {
+      await axios.delete(`http://localhost:5000/api/equipment/${id}`, {
         headers: { 'auth-token': token }
       });
       showNotification('Equipment deleted successfully');
@@ -78,7 +78,7 @@ const Equipment = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/equipment', {
+      await axios.post('http://localhost:5000/api/equipment', {
         id_tag: newEqForm.id_tag || "EQ-XXX",
         name: newEqForm.name,
         location: newEqForm.location,

@@ -17,7 +17,7 @@ function Login() {
     setLoading(true);
     
     try {
-      const res = await axios.post('https://rc-fitness-backend.vercel.app/api/user/login', { email, password });
+      const res = await axios.post('http://localhost:5000/api/user/login', { email, password });
 
       localStorage.setItem('authToken', res.data.token);
       localStorage.setItem('userRole', res.data.role);

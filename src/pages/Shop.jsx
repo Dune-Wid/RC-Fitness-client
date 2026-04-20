@@ -20,9 +20,9 @@ const Shop = () => {
       const token = localStorage.getItem('authToken');
       const config = { headers: { 'auth-token': token } };
       const [productsRes, ordersRes, promosRes] = await Promise.all([
-        axios.get('https://rc-fitness-backend.vercel.app/api/shop/products', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/shop/orders', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/shop/promotions', config).catch(() => ({ data: [] }))
+        axios.get('http://localhost:5000/api/shop/products', config).catch(() => ({ data: [] })),
+        axios.get('http://localhost:5000/api/shop/orders', config).catch(() => ({ data: [] })),
+        axios.get('http://localhost:5000/api/shop/promotions', config).catch(() => ({ data: [] }))
       ]);
       setProducts(productsRes.data);
       setOrders(ordersRes.data);
@@ -56,11 +56,11 @@ const Shop = () => {
     try {
       const token = localStorage.getItem('authToken');
       if (editProductId) {
-        const res = await axios.put(`https://rc-fitness-backend.vercel.app/api/shop/products/update/${editProductId}`, submittedProduct, { headers: { 'auth-token': token } });
+        const res = await axios.put(`http://localhost:5000/api/shop/products/update/${editProductId}`, submittedProduct, { headers: { 'auth-token': token } });
         setProducts(products.map(p => p._id === editProductId ? res.data : p));
         setEditProductId(null);
       } else {
-        await axios.post('https://rc-fitness-backend.vercel.app/api/shop/products/add', submittedProduct, { headers: { 'auth-token': token } });
+        await axios.post('http://localhost:5000/api/shop/products/add', submittedProduct, { headers: { 'auth-token': token } });
         fetchShopData();
       }
       setNewProduct({ name: '', category: '', price: '', stock: '', description: '', images: [] });
@@ -71,7 +71,7 @@ const Shop = () => {
   const handleUpdateOrderStatus = async (orderId, status) => {
     try {
       const token = localStorage.getItem('authToken');
-      await axios.put(`https://rc-fitness-backend.vercel.app/api/shop/orders/${orderId}/status`, { status }, { headers: { 'auth-token': token } });
+      await axios.put(`http://localhost:5000/api/shop/orders/${orderId}/status`, { status }, { headers: { 'auth-token': token } });
       fetchShopData();
     } catch (err) { console.error("Error updating order status:", err); }
   };
@@ -80,7 +80,7 @@ const Shop = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/shop/promotions/add', newPromo, { headers: { 'auth-token': token } });
+      await axios.post('http://localhost:5000/api/shop/promotions/add', newPromo, { headers: { 'auth-token': token } });
       setNewPromo({ code: '', discount: '', isActive: true });
       fetchShopData();
     } catch (err) { console.error("Error adding promo:", err); }
@@ -89,7 +89,7 @@ const Shop = () => {
   const handleTogglePromo = async (id) => {
     try {
       const token = localStorage.getItem('authToken');
-      await axios.put(`https://rc-fitness-backend.vercel.app/api/shop/promotions/toggle/${id}`, {}, { headers: { 'auth-token': token } });
+      await axios.put(`http://localhost:5000/api/shop/promotions/toggle/${id}`, {}, { headers: { 'auth-token': token } });
       fetchShopData();
     } catch (err) { console.error("Error toggling promo:", err); }
   };
@@ -97,7 +97,7 @@ const Shop = () => {
   const handleDeletePromo = async (id) => {
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/shop/promotions/delete/${id}`, { headers: { 'auth-token': token } });
+      await axios.delete(`http://localhost:5000/api/shop/promotions/delete/${id}`, { headers: { 'auth-token': token } });
       fetchShopData();
     } catch (err) { console.error("Error deleting promo:", err); }
   };
@@ -106,7 +106,7 @@ const Shop = () => {
     if(!window.confirm("Are you sure you want to delete this product?")) return;
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/shop/products/delete/${id}`, { headers: { 'auth-token': token } });
+      await axios.delete(`http://localhost:5000/api/shop/products/delete/${id}`, { headers: { 'auth-token': token } });
       fetchShopData();
     } catch (err) { console.error("Error deleting product:", err); }
   };

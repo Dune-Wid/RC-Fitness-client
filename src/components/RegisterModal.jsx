@@ -21,9 +21,9 @@ const RegisterModal = ({ close, refresh, member }) => {
       const config = { headers: { 'auth-token': token } };
       
       if (member) {
-        await axios.put(`https://rc-fitness-backend.vercel.app/api/user/update/${member._id}`, formData, config);
+        await axios.put(`http://localhost:5000/api/user/update/${member._id}`, formData, config);
       } else {
-        await axios.post('https://rc-fitness-backend.vercel.app/api/user/register', formData, config);
+        await axios.post('http://localhost:5000/api/user/register', formData, config);
       }
       refresh(); close();
     } catch (err) { alert(err.response?.data || "Failed"); }

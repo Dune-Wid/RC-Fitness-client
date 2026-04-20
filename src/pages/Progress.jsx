@@ -16,7 +16,7 @@ const Progress = () => {
   const fetchPRs = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const { data } = await axios.get('https://rc-fitness-backend.vercel.app/api/prs', {
+      const { data } = await axios.get('http://localhost:5000/api/prs', {
         headers: { 'auth-token': token }
       });
       setPrs(data);
@@ -29,7 +29,7 @@ const Progress = () => {
     if (!window.confirm("Are you sure you want to delete this PR?")) return;
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/prs/${id}`, {
+      await axios.delete(`http://localhost:5000/api/prs/${id}`, {
         headers: { 'auth-token': token }
       });
       fetchPRs();
@@ -87,7 +87,7 @@ const Progress = () => {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/prs/log', {
+      await axios.post('http://localhost:5000/api/prs/log', {
         liftName: prForm.liftName.toUpperCase(),
         weight: Number(prForm.weight),
         unit: 'kg'

@@ -22,7 +22,7 @@ const StaffModal = ({ close, refresh, staffMember }) => {
   const fetchJobRoles = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get('https://rc-fitness-backend.vercel.app/api/finance/job-roles', { headers: { 'auth-token': token } });
+      const res = await axios.get('http://localhost:5000/api/finance/job-roles', { headers: { 'auth-token': token } });
       setJobRoles(res.data);
       if (!staffMember && res.data.length > 0) {
          const defaultRole = res.data.find(r => r.roleName === 'Trainer') || res.data[0];
@@ -49,9 +49,9 @@ const StaffModal = ({ close, refresh, staffMember }) => {
       const config = { headers: { 'auth-token': token } };
 
       if (staffMember) {
-        await axios.put(`https://rc-fitness-backend.vercel.app/api/user/update/${staffMember._id}`, formData, config);
+        await axios.put(`http://localhost:5000/api/user/update/${staffMember._id}`, formData, config);
       } else {
-        await axios.post('https://rc-fitness-backend.vercel.app/api/user/register', formData, config);
+        await axios.post('http://localhost:5000/api/user/register', formData, config);
       }
       refresh(); close();
     } catch (err) { alert(err.response?.data || "Error"); }

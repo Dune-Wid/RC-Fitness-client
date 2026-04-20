@@ -23,7 +23,7 @@ const Classes = () => {
   const fetchClasses = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const { data } = await axios.get('https://rc-fitness-backend.vercel.app/api/classes', {
+      const { data } = await axios.get('http://localhost:5000/api/classes', {
         headers: { 'auth-token': token }
       });
       setClasses(data);
@@ -35,7 +35,7 @@ const Classes = () => {
   const fetchBookings = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const { data } = await axios.get('https://rc-fitness-backend.vercel.app/api/classes/bookings', {
+      const { data } = await axios.get('http://localhost:5000/api/classes/bookings', {
         headers: { 'auth-token': token }
       });
       setBookings(data);
@@ -48,7 +48,7 @@ const Classes = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/classes/book', {
+      await axios.post('http://localhost:5000/api/classes/book', {
         className: cls.name,
         time: cls.time,
         studioLocation: 'Main Studio'
@@ -70,7 +70,7 @@ const Classes = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/classes/bookings/${id}`, {
+      await axios.delete(`http://localhost:5000/api/classes/bookings/${id}`, {
         headers: { 'auth-token': token }
       });
       showNotification('Booking cancelled successfully');

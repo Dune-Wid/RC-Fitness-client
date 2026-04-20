@@ -10,7 +10,7 @@ const Dashboard = () => {
     const fetchStats = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const res = await axios.get('https://rc-fitness-backend.vercel.app/api/user/stats', { headers: { 'auth-token': token } });
+        const res = await axios.get('http://localhost:5000/api/user/stats', { headers: { 'auth-token': token } });
         setStats(res.data);
       } catch (err) { console.error(err); }
     };

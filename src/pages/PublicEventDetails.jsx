@@ -14,7 +14,7 @@ const PublicEventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const res = await axios.get(`https://rc-fitness-backend.vercel.app/api/events/${id}`);
+        const res = await axios.get(`http://localhost:5000/api/events/${id}`);
         setEvent(res.data);
       } catch (err) { console.error("Error fetching event:", err); } finally {
         setLoading(false);
@@ -28,7 +28,7 @@ const PublicEventDetails = () => {
     setRegistering(true);
     setRegStatus(null);
     try {
-      await axios.post(`https://rc-fitness-backend.vercel.app/api/events/register/${id}`, regData);
+      await axios.post(`http://localhost:5000/api/events/register/${id}`, regData);
       setRegStatus('success');
       setRegData({ userName: '', userEmail: '' });
     } catch (err) {

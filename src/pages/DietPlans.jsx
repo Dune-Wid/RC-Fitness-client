@@ -14,7 +14,7 @@ const DietPlans = () => {
     const fetchDietPlan = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const { data } = await axios.get('https://rc-fitness-backend.vercel.app/api/diet-plans/me', {
+        const { data } = await axios.get('http://localhost:5000/api/diet-plans/me', {
           headers: { 'auth-token': token }
         });
         setMeals(data.meals);

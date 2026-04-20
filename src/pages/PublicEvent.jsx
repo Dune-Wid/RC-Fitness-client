@@ -13,7 +13,7 @@ const PublicEvent = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await axios.get('https://rc-fitness-backend.vercel.app/api/events');
+        const res = await axios.get('http://localhost:5000/api/events');
         setEvents(res.data);
       } catch (err) { console.error("Error fetching events:", err); }
     };
