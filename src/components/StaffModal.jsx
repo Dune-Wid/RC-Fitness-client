@@ -22,11 +22,11 @@ const StaffModal = ({ close, refresh, staffMember }) => {
   const fetchJobRoles = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get('http://localhost:5000/api/finance/job-roles', { headers: { 'auth-token': token } });
+      const res = await axios.get('https://rc-fitness-backend.vercel.app/api/finance/job-roles', { headers: { 'auth-token': token } });
       setJobRoles(res.data);
       if (!staffMember && res.data.length > 0) {
-         const defaultRole = res.data.find(r => r.roleName === 'Trainer') || res.data[0];
-         setFormData(prev => ({ ...prev, jobRole: defaultRole.roleName, salary: defaultRole.baseSalary }));
+        const defaultRole = res.data.find(r => r.roleName === 'Trainer') || res.data[0];
+        setFormData(prev => ({ ...prev, jobRole: defaultRole.roleName, salary: defaultRole.baseSalary }));
       }
     } catch (err) { console.error(err); }
   };
@@ -35,9 +35,9 @@ const StaffModal = ({ close, refresh, staffMember }) => {
     const selectedRoleName = e.target.value;
     const selectedRole = jobRoles.find(r => r.roleName === selectedRoleName);
     setFormData({
-       ...formData, 
-       jobRole: selectedRoleName,
-       salary: selectedRole ? selectedRole.baseSalary : formData.salary
+      ...formData,
+      jobRole: selectedRoleName,
+      salary: selectedRole ? selectedRole.baseSalary : formData.salary
     });
   };
 
@@ -49,9 +49,9 @@ const StaffModal = ({ close, refresh, staffMember }) => {
       const config = { headers: { 'auth-token': token } };
 
       if (staffMember) {
-        await axios.put(`http://localhost:5000/api/user/update/${staffMember._id}`, formData, config);
+        await axios.put(`https://rc-fitness-backend.vercel.app/api/user/update/${staffMember._id}`, formData, config);
       } else {
-        await axios.post('http://localhost:5000/api/user/register', formData, config);
+        await axios.post('https://rc-fitness-backend.vercel.app/api/user/register', formData, config);
       }
       refresh(); close();
     } catch (err) { alert(err.response?.data || "Error"); }
@@ -86,9 +86,9 @@ const StaffModal = ({ close, refresh, staffMember }) => {
             {/* 2. Access & Role */}
             <div className="space-y-6">
               <h3 className="text-red-500 text-[10px] font-black uppercase tracking-[0.3em] border-l-2 border-red-600 pl-3">2. Base Salary & Access</h3>
-              
+
               <div className="flex flex-col gap-1.5 border border-red-900/30 p-4 rounded-xl bg-red-900/5">
-                <label className="text-[10px] text-red-500 font-bold uppercase ml-1 flex items-center gap-2"><Briefcase size={12}/> Job Role Configuration</label>
+                <label className="text-[10px] text-red-500 font-bold uppercase ml-1 flex items-center gap-2"><Briefcase size={12} /> Job Role Configuration</label>
                 <select value={formData.jobRole || ''} className="w-full bg-[#161616] border border-red-900/50 p-3.5 rounded-xl text-sm text-white outline-none focus:border-red-600 transition-colors" onChange={handleRoleChange}>
                   {jobRoles.map(r => (
                     <option key={r._id} value={r.roleName}>{r.roleName} - LKR {r.baseSalary.toLocaleString()}</option>

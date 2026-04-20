@@ -10,7 +10,7 @@ const Landing = () => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/events/announcements/all');
+        const res = await axios.get('https://rc-fitness-backend.vercel.app/api/events/announcements/all');
         setNews(res.data.slice(0, 3)); // Show only latest 3
       } catch (err) { console.error("Error fetching news:", err); }
     };
@@ -24,7 +24,7 @@ const Landing = () => {
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop')" }}
         >
@@ -58,18 +58,18 @@ const Landing = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <FeatureCard 
-            icon={<Dumbbell className="text-red-600" size={32} />} 
+          <FeatureCard
+            icon={<Dumbbell className="text-red-600" size={32} />}
             title="State-of-the-art Equipment"
             desc="Access the latest Hammer Strength resistance machines and Life Fitness cardio equipment."
           />
-          <FeatureCard 
-            icon={<Users className="text-red-600" size={32} />} 
+          <FeatureCard
+            icon={<Users className="text-red-600" size={32} />}
             title="Expert Trainers"
             desc="Work 1-on-1 with certified professionals who build custom periodization plans for you."
           />
-          <FeatureCard 
-            icon={<ShoppingBag className="text-red-600" size={32} />} 
+          <FeatureCard
+            icon={<ShoppingBag className="text-red-600" size={32} />}
             title="Supplement Store"
             desc="Fuel your body with high-quality whey, creatine, and pre-workouts available right here."
           />

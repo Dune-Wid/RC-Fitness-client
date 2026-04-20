@@ -23,7 +23,7 @@ const CartSidebar = () => {
   const handleApplyPromo = async () => {
     if (!promoCode) return;
     try {
-      const res = await axios.post('http://localhost:5000/api/shop/promotions/validate', { code: promoCode });
+      const res = await axios.post('https://rc-fitness-backend.vercel.app/api/shop/promotions/validate', { code: promoCode });
       setAppliedPromo(res.data);
       setPromoError('');
     } catch (err) {
@@ -35,7 +35,7 @@ const CartSidebar = () => {
   const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     const orderData = {
       userName: formData.name,
       userEmail: formData.email,
@@ -56,47 +56,47 @@ const CartSidebar = () => {
     };
 
     try {
-      const res = await axios.post('http://localhost:5000/api/shop/checkout', orderData);
-      
+      const res = await axios.post('https://rc-fitness-backend.vercel.app/api/shop/checkout', orderData);
+
       if (formData.paymentMethod === 'Card' && res.data.payhereHash) {
-          const { order, payhereHash, merchantId } = res.data;
-          
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = 'https://sandbox.payhere.lk/pay/checkout';
-          
-          const params = {
-              merchant_id: merchantId,
-              return_url: window.location.href, 
-              cancel_url: window.location.href,
-              notify_url: 'http://localhost:5000/api/shop/payhere/notify',
-              first_name: formData.name.split(' ')[0],
-              last_name: formData.name.split(' ').slice(1).join(' ') || formData.name,
-              email: formData.email,
-              phone: formData.phone || '0000000000',
-              address: formData.address,
-              city: 'Colombo',
-              country: 'Sri Lanka',
-              order_id: order._id,
-              items: 'RC Fitness Order',
-              currency: 'LKR',
-              amount: finalAmount.toFixed(2),
-              hash: payhereHash
-          };
+        const { order, payhereHash, merchantId } = res.data;
 
-          for (const key in params) {
-              const hiddenField = document.createElement('input');
-              hiddenField.type = 'hidden';
-              hiddenField.name = key;
-              hiddenField.value = params[key];
-              form.appendChild(hiddenField);
-          }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'https://sandbox.payhere.lk/pay/checkout';
 
-          document.body.appendChild(form);
-          form.submit();
+        const params = {
+          merchant_id: merchantId,
+          return_url: window.location.href,
+          cancel_url: window.location.href,
+          notify_url: 'https://rc-fitness-backend.vercel.app/api/shop/payhere/notify',
+          first_name: formData.name.split(' ')[0],
+          last_name: formData.name.split(' ').slice(1).join(' ') || formData.name,
+          email: formData.email,
+          phone: formData.phone || '0000000000',
+          address: formData.address,
+          city: 'Colombo',
+          country: 'Sri Lanka',
+          order_id: order._id,
+          items: 'RC Fitness Order',
+          currency: 'LKR',
+          amount: finalAmount.toFixed(2),
+          hash: payhereHash
+        };
+
+        for (const key in params) {
+          const hiddenField = document.createElement('input');
+          hiddenField.type = 'hidden';
+          hiddenField.name = key;
+          hiddenField.value = params[key];
+          form.appendChild(hiddenField);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
       } else {
-          setOrderComplete(true);
-          clearCart();
+        setOrderComplete(true);
+        clearCart();
       }
     } catch (err) {
       console.error("Checkout failed:", err);
@@ -121,7 +121,7 @@ const CartSidebar = () => {
     <>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]" onClick={closeSidebar}></div>
       <div className="fixed top-0 right-0 h-full w-full max-w-md bg-[#111] border-l border-gray-800 z-[70] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-        
+
         <div className="flex justify-between items-center p-6 border-b border-gray-900 bg-[#0a0a0a]">
           <h2 className="text-xl font-black uppercase italic tracking-tighter flex items-center gap-3 text-white">
             <ShoppingBag className="text-purple-500" /> Your Cart
@@ -146,31 +146,31 @@ const CartSidebar = () => {
             <form id="checkout-form" onSubmit={handleCheckoutSubmit} className="space-y-4 flex-1">
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Full Name</label>
-                <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white" placeholder="John Doe" />
+                <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white" placeholder="John Doe" />
               </div>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Email Address</label>
-                <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white" placeholder="john@example.com" />
+                <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white" placeholder="john@example.com" />
               </div>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Delivery Address</label>
-                <textarea required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white h-20 resize-none" placeholder="Enter your full address..." />
+                <textarea required value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 transition-colors text-white h-20 resize-none" placeholder="Enter your full address..." />
               </div>
-              
+
               <div className="pt-4">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4">Payment Method</label>
                 <div className="grid grid-cols-2 gap-4">
-                  <button 
-                    type="button" 
-                    onClick={() => setFormData({...formData, paymentMethod: 'Cash'})}
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, paymentMethod: 'Cash' })}
                     className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === 'Cash' ? 'bg-purple-600/10 border-purple-600 text-purple-400' : 'bg-[#111] border-gray-800 text-gray-500'}`}
                   >
                     <Banknote size={20} />
                     <span className="text-[10px] font-bold uppercase">Cash on Pickup</span>
                   </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setFormData({...formData, paymentMethod: 'Card'})}
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, paymentMethod: 'Card' })}
                     className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === 'Card' ? 'bg-purple-600/10 border-purple-600 text-purple-400' : 'bg-[#111] border-gray-800 text-gray-500'}`}
                   >
                     <CreditCard size={20} />
@@ -238,10 +238,10 @@ const CartSidebar = () => {
                   <span className="text-white">LKR {totalAmount.toLocaleString()}</span>
                 </div>
                 {appliedPromo && (
-                   <div className="flex justify-between text-sm font-bold uppercase tracking-widest text-green-500">
-                     <span>Discount ({appliedPromo.discount}%)</span>
-                     <span>- LKR {discountAmount.toLocaleString()}</span>
-                   </div>
+                  <div className="flex justify-between text-sm font-bold uppercase tracking-widest text-green-500">
+                    <span>Discount ({appliedPromo.discount}%)</span>
+                    <span>- LKR {discountAmount.toLocaleString()}</span>
+                  </div>
                 )}
                 <div className="flex justify-between text-lg font-black uppercase tracking-tight text-white mb-4">
                   <span>Total</span>

@@ -28,7 +28,7 @@ const Membership = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/finance/plans');
+        const res = await axios.get('https://rc-fitness-backend.vercel.app/api/finance/plans');
         setPlans(res.data);
         if (res.data.length > 0) {
           // Pre-select the middle plan as "popular" if multiple exist
@@ -50,7 +50,7 @@ const Membership = () => {
     const orderId = `MBR-${Date.now()}`;
     const amount = parseFloat(plan.price).toFixed(2);
     const currency = 'LKR';
-    const notifyUrl = 'http://localhost:5000/api/shop/payhere/notify';
+    const notifyUrl = 'https://rc-fitness-backend.vercel.app/api/shop/payhere/notify';
     const returnUrl = window.location.href;
 
     // For a direct plan purchase we compute the hash on the server would be ideal
