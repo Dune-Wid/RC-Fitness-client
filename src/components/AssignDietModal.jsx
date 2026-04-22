@@ -17,7 +17,7 @@ const AssignDietModal = ({ isOpen, onClose, memberName = 'SARAH CONNOR (#RC-8842
 
     setIsSubmitting(true);
     try {
-      await axios.post('http://localhost:5000/api/diet/assign', {
+      await axios.post('https://rc-fitness-backend.vercel.app/api/diet/assign', {
         memberName,
         goal,
         dietDetails

@@ -38,7 +38,7 @@ const WorkoutPlans = () => {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('http://localhost:5000/api/workouts/complete', {
+      await axios.post('https://rc-fitness-backend.vercel.app/api/workouts/complete', {
         programName: 'Hypertrophy Phase 1',
         week: 3,
         day: 'Monday: Leg Day',

@@ -25,7 +25,7 @@ const MemberReviews = () => {
   const fetchReviews = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const { data } = await axios.get('http://localhost:5000/api/reviews', {
+      const { data } = await axios.get('https://rc-fitness-backend.vercel.app/api/reviews', {
         headers: { 'auth-token': token }
       });
       setReviewsList(data);
@@ -50,7 +50,7 @@ const MemberReviews = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`http://localhost:5000/api/reviews/${id}`, {
+      await axios.delete(`https://rc-fitness-backend.vercel.app/api/reviews/${id}`, {
         headers: { 'auth-token': token }
       });
       showNotification('Review deleted successfully');
@@ -72,11 +72,11 @@ const MemberReviews = () => {
     try {
       const token = localStorage.getItem('authToken');
       // Fetch profile to get real name/membership duration
-      const profileRes = await axios.get('http://localhost:5000/api/user/me', {
+      const profileRes = await axios.get('https://rc-fitness-backend.vercel.app/api/user/me', {
         headers: { 'auth-token': token }
       });
       
-      await axios.post('http://localhost:5000/api/reviews', {
+      await axios.post('https://rc-fitness-backend.vercel.app/api/reviews', {
         name: profileRes.data.fullName,
         membershipDuration: profileRes.data.membershipType,
         rating,
