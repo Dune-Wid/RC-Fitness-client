@@ -15,8 +15,7 @@ const Sidebar = () => {
     { name: 'Shop', icon: <ShoppingBag size={20}/>, path: '/shop' },
     { name: 'Event', icon: <Calendar size={20}/>, path: '/event' },
     { name: 'Equipment', icon: <Dumbbell size={20}/>, path: '/equipment' },
-    { name: 'Classes', icon: <BicepsFlexed size={20}/>, path: '/class' },
-    { name: 'Settings', icon: <Settings size={20}/>, path: '/settings' },
+    { name: 'Classes', icon: <BicepsFlexed size={20}/>, path: '/class' }
   ];
 
   const handleLogout = () => {
