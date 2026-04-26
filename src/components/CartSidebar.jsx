@@ -3,6 +3,7 @@ import { X, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle, Banknote, Landmar
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import InvoiceModal from './InvoiceModal';
 
 const CartSidebar = () => {
   const { cartItems, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -15,6 +16,8 @@ const CartSidebar = () => {
   const [activeSale, setActiveSale] = useState(null);
   const [promoError, setPromoError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSavedOrder, setLastSavedOrder] = useState(null);
+  const [showInvoice, setShowInvoice] = useState(false);
 
   useEffect(() => {
     const fetchActiveSale = async () => {
@@ -95,7 +98,8 @@ const CartSidebar = () => {
     };
 
     try {
-      await axios.post('https://rc-fitness-backend.vercel.app/api/shop/checkout', orderData);
+      const res = await axios.post(`https://rc-fitness-backend.vercel.app/api/shop/checkout`, orderData);
+      setLastSavedOrder(res.data.order);
       setOrderComplete(true);
       clearCart();
     } catch (err) {
@@ -140,9 +144,17 @@ const CartSidebar = () => {
                 ? "Your receipt has been submitted. We will verify and process your order soon."
                 : "Your order has been placed. Please pay at the front desk upon pickup."}
             </p>
-            <button onClick={closeSidebar} className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all">
-              Continue Shopping
-            </button>
+            <div className="w-full space-y-4 px-6">
+              <button
+                onClick={() => setShowInvoice(true)}
+                className="w-full bg-[#111] hover:bg-gray-800 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all border border-gray-800 flex items-center justify-center gap-2"
+              >
+                <Download size={16} /> Download Invoice
+              </button>
+              <button onClick={closeSidebar} className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-red-900/20">
+                Continue Shopping
+              </button>
+            </div>
           </div>
         ) : isCheckout ? (
           <div className="flex-1 overflow-y-auto p-6 bg-black flex flex-col">
@@ -324,6 +336,10 @@ const CartSidebar = () => {
         )}
 
       </div>
+
+      {showInvoice && lastSavedOrder && (
+        <InvoiceModal order={lastSavedOrder} onClose={() => setShowInvoice(false)} />
+      )}
     </>
   );
 };

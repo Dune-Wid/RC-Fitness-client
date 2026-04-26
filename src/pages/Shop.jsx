@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
+import { API_BASE_URL } from '../config';
 import InventoryReportModal from '../components/InventoryReportModal';
-import { ShoppingBag, Plus, Edit2, Trash2, Image as ImageIcon, Tag, Package, CheckCircle, DollarSign, ListOrdered, AlertTriangle } from 'lucide-react';
+import OrdersReportModal from '../components/OrdersReportModal';
+import { ShoppingBag, Plus, Edit2, Trash2, Image as ImageIcon, Tag, Package, CheckCircle, DollarSign, ListOrdered, AlertTriangle, Download } from 'lucide-react';
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
@@ -11,6 +13,7 @@ const Shop = () => {
   const [editProductId, setEditProductId] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showOrdersReport, setShowOrdersReport] = useState(false);
   const [activeTab, setActiveTab] = useState('inventory');
   const [orders, setOrders] = useState([]);
   const [promotions, setPromotions] = useState([]);
@@ -30,9 +33,9 @@ const Shop = () => {
       const token = localStorage.getItem('authToken');
       const config = { headers: { 'auth-token': token } };
       const [productsRes, ordersRes, promosRes] = await Promise.all([
-        axios.get('https://rc-fitness-backend.vercel.app/api/shop/products', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/shop/orders', config).catch(() => ({ data: [] })),
-        axios.get('https://rc-fitness-backend.vercel.app/api/shop/promotions', config).catch(() => ({ data: [] }))
+        axios.get(`https://rc-fitness-backend.vercel.app/api/shop/products`, config).catch(() => ({ data: [] })),
+        axios.get(`https://rc-fitness-backend.vercel.app/api/shop/orders`, config).catch(() => ({ data: [] })),
+        axios.get(`https://rc-fitness-backend.vercel.app/api/shop/promotions`, config).catch(() => ({ data: [] }))
       ]);
       setProducts(productsRes.data);
       setOrders(ordersRes.data);
@@ -77,7 +80,7 @@ const Shop = () => {
         setProducts(products.map(p => p._id === editProductId ? res.data : p));
         setEditProductId(null);
       } else {
-        await axios.post('https://rc-fitness-backend.vercel.app/api/shop/products/add', submittedProduct, { headers: { 'auth-token': token } });
+        await axios.post(`https://rc-fitness-backend.vercel.app/api/shop/products/add`, submittedProduct, { headers: { 'auth-token': token } });
         fetchShopData();
       }
       setNewProduct({ name: '', category: '', price: '', stock: '', description: '', images: [] });
@@ -112,7 +115,7 @@ const Shop = () => {
         promoToSubmit.endDate = end;
       }
 
-      await axios.post('https://rc-fitness-backend.vercel.app/api/shop/promotions/add', promoToSubmit, { headers: { 'auth-token': token } });
+      await axios.post(`https://rc-fitness-backend.vercel.app/api/shop/promotions/add`, promoToSubmit, { headers: { 'auth-token': token } });
       setNewPromo({
         type: 'code',
         code: '',
@@ -147,7 +150,7 @@ const Shop = () => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://rc-fitness-backend.vercel.app/api/shop/products/delete/${id}`, { headers: { 'auth-token': token } });
+      await axios.delete(`https://rc-fitness-backend.vercel.app/shop/products/delete/${id}`, { headers: { 'auth-token': token } });
       fetchShopData();
     } catch (err) { console.error("Error deleting product:", err); }
   };
@@ -307,6 +310,15 @@ const Shop = () => {
 
         {activeTab === 'orders' && (
           <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Recent Orders</h3>
+              <button
+                onClick={() => setShowOrdersReport(true)}
+                className="bg-[#111] hover:bg-red-900/20 text-red-500 border border-red-900/30 px-4 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center gap-2"
+              >
+                <Download size={12} /> Generate Orders Report
+              </button>
+            </div>
             {orders.map(order => (
               <div key={order._id} className="bg-[#121212] border border-gray-800 rounded-3xl p-6 hover:border-gray-700 transition-all">
                 <div className="flex flex-col lg:flex-row justify-between gap-6">
@@ -334,7 +346,7 @@ const Shop = () => {
                   <div className="w-full lg:w-72 space-y-4 border-l border-gray-900 lg:pl-6">
                     <div>
                       <label className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 block">Shipping / Payment</label>
-                      <p className="text-[10px] text-gray-400 font-bold leading-relaxed">{order.billingDetails.address}</p>
+                      <p className="text-[10px] text-gray-400 font-bold leading-relaxed">{order.billingDetails?.address || 'N/A'}</p>
                       <p className="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-widest">{order.paymentMethod}</p>
                     </div>
                     <select
@@ -503,6 +515,13 @@ const Shop = () => {
           <InventoryReportModal
             products={products}
             onClose={() => setShowReportModal(false)}
+          />
+        )}
+
+        {showOrdersReport && (
+          <OrdersReportModal
+            orders={orders}
+            onClose={() => setShowOrdersReport(false)}
           />
         )}
 
