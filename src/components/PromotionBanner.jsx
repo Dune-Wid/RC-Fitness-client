@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 
 const PromotionBanner = () => {
     const [activeSale, setActiveSale] = useState(null);
     const [timeLeft, setTimeLeft] = useState({});
+    const navigate = useNavigate();
 
     const calculateTimeLeft = (endDate) => {
         const difference = +new Date(endDate) - +new Date();
@@ -23,7 +25,7 @@ const PromotionBanner = () => {
     useEffect(() => {
         const fetchPromo = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/api/shop/promotions`);
+                const res = await axios.get(`https://rc-fitness-backend.vercel.app/api/shop/promotions`);
                 const promoSale = res.data
                     .filter(p => p.type === 'sale' && p.isActive && new Date(p.endDate) > new Date())
                     .sort((a, b) => new Date(a.endDate) - new Date(b.endDate))[0];
@@ -77,7 +79,12 @@ const PromotionBanner = () => {
                     </div>
 
                     <div className="shrink-0">
-                        <button className="bg-white text-red-600 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-2xl active:scale-95">Shop the Sale</button>
+                        <button 
+                            onClick={() => navigate('/store')}
+                            className="bg-white text-red-600 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-2xl active:scale-95"
+                        >
+                            Shop the Sale
+                        </button>
                     </div>
                 </div>
             </div>

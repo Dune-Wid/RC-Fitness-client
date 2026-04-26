@@ -19,7 +19,7 @@ const CartSidebar = () => {
   useEffect(() => {
     const fetchActiveSale = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/shop/promotions`);
+        const res = await axios.get(`https://rc-fitness-backend.vercel.app/api/shop/promotions`);
         const sale = res.data
           .filter(p => p.type === 'sale' && p.isActive && new Date(p.endDate) > new Date())
           .sort((a, b) => new Date(a.endDate) - new Date(b.endDate))[0];
