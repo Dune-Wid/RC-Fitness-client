@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Dumbbell, Users, ShoppingBag, Instagram, Globe, Twitter, ArrowRight, Calendar } from 'lucide-react';
 import PublicNavbar from '../components/PublicNavbar';
+import PromotionBanner from '../components/PromotionBanner';
 
 const Landing = () => {
   const [news, setNews] = useState([]);
@@ -44,6 +45,8 @@ const Landing = () => {
           </button>
         </div>
       </section>
+
+      <PromotionBanner />
 
       {/* Features Section */}
       <section className="py-24 px-6 max-w-7xl mx-auto">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { Search, ShoppingBag, Filter, ArrowRight } from 'lucide-react';
 import PublicNavbar from '../components/PublicNavbar';
+import PromotionBanner from '../components/PromotionBanner';
 import { useCart } from '../context/CartContext';
 
 const PublicShop = () => {
@@ -44,6 +45,8 @@ const PublicShop = () => {
           <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest">{filteredProducts.length} Products</p>
         </div>
       </section>
+
+      <PromotionBanner />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row gap-10">

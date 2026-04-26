@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { X, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle, Banknote, Landmark, Upload } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle, Banknote, Landmark, Upload, Tag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const CartSidebar = () => {
   const { cartItems, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -11,14 +12,37 @@ const CartSidebar = () => {
   const [receiptBase64, setReceiptBase64] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState(null);
+  const [activeSale, setActiveSale] = useState(null);
   const [promoError, setPromoError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchActiveSale = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/shop/promotions`);
+        const sale = res.data
+          .filter(p => p.type === 'sale' && p.isActive && new Date(p.endDate) > new Date())
+          .sort((a, b) => new Date(a.endDate) - new Date(b.endDate))[0];
+        if (sale) setActiveSale(sale);
+      } catch (err) { console.error("Error fetching active sale:", err); }
+    };
+    fetchActiveSale();
+  }, [isCartOpen]);
 
   if (!isCartOpen) return null;
 
   const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const discountAmount = appliedPromo ? (totalAmount * (appliedPromo.discount / 100)) : 0;
-  const finalAmount = totalAmount - discountAmount;
+
+  const saleDiscount = activeSale
+    ? (activeSale.discountType === 'flat' ? activeSale.discountValue : (totalAmount * (activeSale.discountValue / 100)))
+    : 0;
+
+  const promoDiscount = appliedPromo
+    ? (appliedPromo.discountType === 'flat' ? appliedPromo.discountValue : (totalAmount * (appliedPromo.discountValue / 100)))
+    : 0;
+
+  const discountAmount = saleDiscount + promoDiscount;
+  const finalAmount = Math.max(0, totalAmount - discountAmount);
 
   // Convert File to Base64
   const handleFileChange = (e) => {
@@ -112,7 +136,7 @@ const CartSidebar = () => {
             <CheckCircle size={64} className="text-red-600 mb-6 animate-bounce" />
             <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-2">Order Confirmed!</h3>
             <p className="text-gray-400 text-sm mb-8">
-              {formData.paymentMethod === 'Bank' 
+              {formData.paymentMethod === 'Bank'
                 ? "Your receipt has been submitted. We will verify and process your order soon."
                 : "Your order has been placed. Please pay at the front desk upon pickup."}
             </p>
@@ -180,9 +204,9 @@ const CartSidebar = () => {
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Upload Deposit Slip</label>
                     <div className="relative group">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
+                      <input
+                        type="file"
+                        accept="image/*"
                         onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         required
@@ -214,7 +238,26 @@ const CartSidebar = () => {
                   <button type="button" onClick={handleApplyPromo} className="px-6 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-[10px] font-black uppercase transition-all">Apply</button>
                 </div>
                 {promoError && <p className="text-red-500 text-[10px] mt-2 font-bold uppercase">{promoError}</p>}
-                {appliedPromo && <p className="text-green-500 text-[10px] mt-2 font-bold uppercase tracking-widest">Applied: {appliedPromo.discount}% OFF!</p>}
+
+                <div className="space-y-2 mt-3">
+                  {activeSale && (
+                    <div className="flex items-center gap-2 p-3 bg-red-950/20 border border-red-900/30 rounded-xl">
+                      <Tag size={12} className="text-red-500" />
+                      <p className="text-[9px] font-black uppercase text-red-500 tracking-widest flex-1">
+                        Flash Sale: {activeSale.title} (-{activeSale.discountType === 'flat' ? `Rs.${activeSale.discountValue}` : `${activeSale.discountValue}%`})
+                      </p>
+                      <span className="text-[8px] font-bold text-red-400 bg-red-400/10 px-2 py-0.5 rounded">Auto-Applied</span>
+                    </div>
+                  )}
+                  {appliedPromo && (
+                    <div className="flex items-center gap-2 p-3 bg-blue-950/20 border border-blue-900/30 rounded-xl">
+                      <Tag size={12} className="text-blue-400" />
+                      <p className="text-[9px] font-black uppercase text-blue-400 tracking-widest flex-1">
+                        Promo: {appliedPromo.code} (-{appliedPromo.discountType === 'flat' ? `Rs.${appliedPromo.discountValue}` : `${appliedPromo.discountValue}%`})
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </form>
           </div>
@@ -262,7 +305,7 @@ const CartSidebar = () => {
               <span>{isCheckout ? 'Final Total' : 'Total Amount'}</span>
               <span className="text-red-600">LKR {isCheckout ? finalAmount.toLocaleString() : totalAmount.toLocaleString()}</span>
             </div>
-            
+
             {isCheckout ? (
               <div className="flex gap-4">
                 <button onClick={() => setIsCheckout(false)} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] transition-colors">

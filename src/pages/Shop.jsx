@@ -14,7 +14,16 @@ const Shop = () => {
   const [activeTab, setActiveTab] = useState('inventory');
   const [orders, setOrders] = useState([]);
   const [promotions, setPromotions] = useState([]);
-  const [newPromo, setNewPromo] = useState({ code: '', discount: '', isActive: true });
+  const [newPromo, setNewPromo] = useState({
+    type: 'code',
+    code: '',
+    title: '',
+    discountValue: '',
+    discountType: 'percentage',
+    userLimit: '',
+    endDate: '',
+    isActive: true
+  });
 
   const fetchShopData = async () => {
     try {
@@ -88,8 +97,32 @@ const Shop = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('authToken');
-      await axios.post('https://rc-fitness-backend.vercel.app/api/shop/promotions/add', newPromo, { headers: { 'auth-token': token } });
-      setNewPromo({ code: '', discount: '', isActive: true });
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const promoToSubmit = { ...newPromo };
+      if (!promoToSubmit.startDate && promoToSubmit.type === 'sale') {
+        promoToSubmit.startDate = today;
+      }
+
+      // Ensure dates are midnight-aligned if provided
+      if (promoToSubmit.endDate) {
+        const end = new Date(promoToSubmit.endDate);
+        end.setHours(23, 59, 59, 999);
+        promoToSubmit.endDate = end;
+      }
+
+      await axios.post('https://rc-fitness-backend.vercel.app/api/shop/promotions/add', promoToSubmit, { headers: { 'auth-token': token } });
+      setNewPromo({
+        type: 'code',
+        code: '',
+        title: '',
+        discountValue: '',
+        discountType: 'percentage',
+        userLimit: '',
+        endDate: '',
+        isActive: true
+      });
       fetchShopData();
     } catch (err) { console.error("Error adding promo:", err); }
   };
@@ -325,26 +358,142 @@ const Shop = () => {
 
         {activeTab === 'promos' && (
           <section className="animate-in fade-in slide-in-from-bottom-4">
-            <form onSubmit={handleAddPromo} className="mb-8 bg-[#121212] border border-gray-800 rounded-3xl p-6 flex flex-col md:flex-row gap-4">
-              <input type="text" placeholder="Promo Code (e.g. GYM20)" value={newPromo.code} onChange={e => setNewPromo({ ...newPromo, code: e.target.value.toUpperCase() })} className="flex-1 bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors uppercase" required />
-              <input type="number" placeholder="Discount %" value={newPromo.discount} onChange={e => setNewPromo({ ...newPromo, discount: e.target.value })} className="md:w-32 bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors" required />
-              <button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-black uppercase text-[10px] tracking-widest px-8 py-3 rounded-xl transition-all shadow-lg active:scale-95">Add Code</button>
+            <div className="flex gap-4 mb-6">
+              <button
+                onClick={() => setNewPromo({ ...newPromo, type: 'code' })}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${newPromo.type === 'code' ? 'bg-red-600 text-white' : 'bg-[#111] text-gray-500'}`}
+              >
+                Promo Code
+              </button>
+              <button
+                onClick={() => setNewPromo({ ...newPromo, type: 'sale' })}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${newPromo.type === 'sale' ? 'bg-red-600 text-white' : 'bg-[#111] text-gray-500'}`}
+              >
+                Flash Sale
+              </button>
+            </div>
+
+            <form onSubmit={handleAddPromo} className="mb-8 bg-[#121212] border border-gray-800 rounded-3xl p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                {newPromo.type === 'code' ? (
+                  <input
+                    type="text"
+                    placeholder="Promo Code (e.g. GYM20)"
+                    value={newPromo.code}
+                    onChange={e => setNewPromo({ ...newPromo, code: e.target.value.toUpperCase() })}
+                    className="bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors uppercase"
+                    required
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="Sale Title (e.g. Summer Sale)"
+                    value={newPromo.title}
+                    onChange={e => setNewPromo({ ...newPromo, title: e.target.value })}
+                    className="bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors"
+                    required
+                  />
+                )}
+
+                <div className="flex bg-black border border-gray-800 rounded-xl overflow-hidden">
+                  <input
+                    type="number"
+                    placeholder={newPromo.discountType === 'percentage' ? "Discount %" : "Flat Amount"}
+                    value={newPromo.discountValue}
+                    onChange={e => setNewPromo({ ...newPromo, discountValue: e.target.value })}
+                    className="flex-1 bg-transparent border-none px-4 py-3 text-sm focus:outline-none"
+                    required
+                  />
+                  <select
+                    value={newPromo.discountType}
+                    onChange={e => setNewPromo({ ...newPromo, discountType: e.target.value })}
+                    className="bg-gray-900 border-l border-gray-800 px-2 text-[10px] font-black uppercase text-gray-400 focus:outline-none"
+                  >
+                    <option value="percentage">%</option>
+                    <option value="flat">LKR</option>
+                  </select>
+                </div>
+
+                {newPromo.type === 'code' ? (
+                  <input
+                    type="number"
+                    placeholder="User Limit (Optional)"
+                    value={newPromo.userLimit}
+                    onChange={e => setNewPromo({ ...newPromo, userLimit: e.target.value })}
+                    className="bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors"
+                  />
+                ) : (
+                  <div className="flex flex-col justify-center px-4 bg-black/40 rounded-xl border border-gray-800">
+                    <span className="text-[8px] font-bold text-gray-600 uppercase tracking-widest">Starts Today</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{new Date().toLocaleDateString()}</span>
+                  </div>
+                )}
+
+                <input
+                  type="date"
+                  title={newPromo.type === 'code' ? "Expiry Date" : "End Date"}
+                  value={newPromo.endDate}
+                  onChange={e => setNewPromo({ ...newPromo, endDate: e.target.value })}
+                  className="bg-black border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 transition-colors text-gray-400"
+                  required
+                />
+              </div>
+              <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-black uppercase text-[10px] tracking-widest py-4 rounded-xl transition-all shadow-lg active:scale-95">
+                {newPromo.type === 'code' ? 'Add Promo Code' : 'Start Flash Sale'}
+              </button>
             </form>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
               {promotions.map(promo => (
-                <div key={promo._id} className="bg-[#121212] border border-gray-800 rounded-3xl p-6 flex items-center justify-between group hover:border-red-500/50 transition-all">
-                  <div>
-                    <h4 className="font-black text-xl italic uppercase tracking-tighter mb-1">{promo.code}</h4>
-                    <p className="text-red-500 font-bold text-sm">{promo.discount}% OFF &bull; <span className={promo.isActive ? 'text-red-500' : 'text-red-500'}>{promo.isActive ? 'ACTIVE' : 'INACTIVE'}</span></p>
+                <div key={promo._id} className="bg-[#121212] border border-gray-800 rounded-2xl p-5 group hover:border-red-500/50 transition-all flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex items-center gap-6 flex-1 w-full md:w-auto">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${promo.type === 'code' ? 'bg-blue-900/20 text-blue-400' : 'bg-red-900/20 text-red-400'}`}>
+                      {promo.type === 'code' ? <Tag size={20} /> : <DollarSign size={20} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="font-black text-lg italic uppercase tracking-tighter truncate">
+                          {promo.type === 'code' ? promo.code : promo.title}
+                        </h4>
+                        <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${promo.isActive ? 'bg-green-500/10 text-green-500' : 'bg-gray-500/10 text-gray-500'}`}>
+                          {promo.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <p className="text-red-500 font-bold text-xs uppercase tracking-widest">
+                        {promo.discountType === 'flat' ? `Rs. ${promo.discountValue}` : `${promo.discountValue}%`} OFF
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleTogglePromo(promo._id)} className="p-3 bg-black rounded-xl text-gray-500 hover:text-red-500 transition-colors"><Edit2 size={16} /></button>
-                    <button onClick={() => handleDeletePromo(promo._id)} className="p-3 bg-black rounded-xl text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+
+                  <div className="flex flex-wrap items-center gap-8 px-6 border-l border-gray-900 flex-[2] justify-center md:justify-start w-full md:w-auto">
+                    {promo.type === 'code' && (
+                      <div className="text-center md:text-left">
+                        <p className="text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-1">Usage Limit</p>
+                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{promo.usageCount || 0} / {promo.userLimit || '∞'}</p>
+                      </div>
+                    )}
+                    <div className="text-center md:text-left">
+                      <p className="text-[8px] font-bold text-gray-600 uppercase tracking-widest mb-1">{promo.type === 'code' ? 'Expires' : 'Ends'}</p>
+                      <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                        {promo.endDate ? new Date(promo.endDate).toLocaleDateString() : 'Never'}
+                      </p>
+                    </div>
+                    {promo.endDate && new Date(promo.endDate) < new Date() && (
+                      <span className="text-[9px] font-black uppercase tracking-widest text-red-500 bg-red-500/10 px-3 py-1 rounded-full">Expired</span>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 shrink-0 w-full md:w-auto justify-end">
+                    <button onClick={() => handleTogglePromo(promo._id)} className="flex-1 md:flex-none p-3 bg-black border border-gray-900 rounded-xl text-gray-500 hover:text-red-500 hover:border-red-500 transition-all">
+                      <Edit2 size={16} />
+                    </button>
+                    <button onClick={() => handleDeletePromo(promo._id)} className="flex-1 md:flex-none p-3 bg-black border border-gray-900 rounded-xl text-gray-500 hover:text-red-500 hover:border-red-500 transition-all">
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               ))}
-              {promotions.length === 0 && <p className="col-span-full text-center py-10 text-gray-600 font-bold uppercase tracking-widest text-[10px]">No active promotions.</p>}
+              {promotions.length === 0 && <p className="text-center py-20 text-gray-600 font-bold uppercase tracking-widest text-[10px] border border-dashed border-gray-800 rounded-3xl">No promotions found.</p>}
             </div>
           </section>
         )}
